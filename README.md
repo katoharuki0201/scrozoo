@@ -15,6 +15,7 @@ TechJam 2026 チームBの企画として開発しています。
 
 - [要件定義](./docs/requirements.md)
 - [画面とページ遷移](./docs/screens-and-flows.md)
+- [API 定義](./docs/api.md)
 - [技術構成](./docs/architecture.md)
 - [決定事項](./docs/decisions.md)
 
