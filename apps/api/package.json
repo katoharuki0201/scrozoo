@@ -1,10 +1,16 @@
 {
   "name": "api",
+  "type": "module",
   "scripts": {
-    "dev": "bun run --hot src/index.ts"
+    "dev": "bun run --hot src/index.ts",
+    "auth:generate": "bun x auth@latest generate --output ./src/db/auth-schema.ts --yes",
+    "auth:sync": "cp ./src/db/auth-schema.ts ./src/db/schema.ts",
+    "auth:schema": "bun run auth:generate && bun run auth:sync"
   },
   "dependencies": {
+    "@better-auth/drizzle-adapter": "^1.7.1",
     "@libsql/client": "^0.17.4",
+    "better-auth": "^1.7.1",
     "drizzle-orm": "^0.45.2",
     "hono": "^4.13.3"
   },
