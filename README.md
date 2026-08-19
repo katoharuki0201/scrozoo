@@ -1,1 +1,39 @@
-# scrozoo
+# Scrozoo
+
+動物園の日常をショート動画で楽しみながら、月額プランや投げ銭で応援できる Web サービスです。
+
+TechJam 2026 チームBの企画として開発しています。
+
+## コンセプト
+
+- 動物園が、飼育する動物の日常動画を発信する
+- 無料ユーザーは冒頭 5 秒、サポーターは応援中の動物園の動画をフル視聴できる
+- 月額応援、投げ銭付きコメント、サポーターチャットで動物園を応援する
+- 現地 QR コードの認証後、来園者が写真をギャラリーに投稿できる
+
+## 主なドキュメント
+
+- [要件定義](./docs/requirements.md)
+- [画面とページ遷移](./docs/screens-and-flows.md)
+- [技術構成](./docs/architecture.md)
+- [決定事項](./docs/decisions.md)
+
+## 技術スタック
+
+- React + Vite / Hono / TypeScript
+- Turso + Drizzle ORM
+- Better Auth
+- Cloudflare R2
+- Stripe Sandbox
+- Cloudflare Workers / Pages
+- Bun
+
+モックは各サービスの無料枠と Stripe Sandbox を使って公開する想定です。詳細は [技術構成](./docs/architecture.md) を参照してください。
+
+## 開発状況
+
+現在は要件定義段階です。実行方法や開発コマンドは、実装開始後に追記します。
+
+## チーム
+
+加藤晴快、勝野鉱治、鈴木晟琥、塩谷咲弥、中元響介、千葉星梧
