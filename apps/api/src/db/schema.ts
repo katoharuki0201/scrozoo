@@ -151,12 +151,19 @@ export type MediaPurpose =
 
 export type MediaStatus = "pending" | "ready" | "deleted";
 
+export type SubscriptionEventType =
+  | "started"
+  | "renewed"
+  | "cancelScheduled"
+  | "ended"
+  | "paymentFailed";
+
 export const userProfile = sqliteTable(
   "user_profile",
   {
     userId: text("user_id")
       .primaryKey()
-      .references(() => user.id, { onDelete: "cascade" }),
+      .references(() => user.id, { onDelete: "restrict" }),
     bio: text("bio"),
     withdrawnAt: integer("withdrawn_at", { mode: "timestamp_ms" }),
     createdAt: createdAt(),
@@ -197,6 +204,14 @@ export const mediaAsset = sqliteTable(
     index("media_asset_status_created_at_idx").on(table.status, table.createdAt),
     check("media_asset_byte_size_check", sql`${table.byteSize} > 0`),
     check(
+      "media_asset_object_key_length_check",
+      sql`length(${table.objectKey}) between 1 and 1024`,
+    ),
+    check(
+      "media_asset_content_type_length_check",
+      sql`length(${table.contentType}) between 1 and 255`,
+    ),
+    check(
       "media_asset_purpose_check",
       sql`${table.purpose} in ('avatar', 'zooProfile', 'animalProfile', 'video', 'videoPreview', 'galleryImage')`,
     ),
@@ -234,6 +249,26 @@ export const zoo = sqliteTable(
   (table) => [
     index("zoo_name_idx").on(table.name),
     index("zoo_region_status_idx").on(table.region, table.status),
+    check(
+      "zoo_slug_length_check",
+      sql`length(${table.slug}) between 1 and 100`,
+    ),
+    check(
+      "zoo_name_length_check",
+      sql`length(${table.name}) between 1 and 100`,
+    ),
+    check(
+      "zoo_description_length_check",
+      sql`${table.description} is null or length(${table.description}) <= 1000`,
+    ),
+    check(
+      "zoo_region_length_check",
+      sql`length(${table.region}) between 1 and 100`,
+    ),
+    check(
+      "zoo_address_length_check",
+      sql`${table.address} is null or length(${table.address}) <= 255`,
+    ),
     check("zoo_status_check", sql`${table.status} in ('active', 'inactive')`),
   ],
 );
@@ -262,6 +297,10 @@ export const zooSocialLink = sqliteTable(
     check(
       "zoo_social_link_platform_check",
       sql`${table.platform} in ('website', 'x', 'instagram', 'youtube', 'tiktok', 'facebook')`,
+    ),
+    check(
+      "zoo_social_link_url_length_check",
+      sql`length(${table.url}) between 1 and 2048`,
     ),
   ],
 );
@@ -292,6 +331,18 @@ export const animal = sqliteTable(
     index("animal_zoo_status_idx").on(table.zooId, table.status),
     index("animal_name_idx").on(table.name),
     index("animal_species_idx").on(table.species),
+    check(
+      "animal_name_length_check",
+      sql`length(${table.name}) between 1 and 100`,
+    ),
+    check(
+      "animal_species_length_check",
+      sql`length(${table.species}) between 1 and 100`,
+    ),
+    check(
+      "animal_description_length_check",
+      sql`${table.description} is null or length(${table.description}) <= 1000`,
+    ),
     check(
       "animal_status_check",
       sql`${table.status} in ('active', 'archived')`,
@@ -353,18 +404,29 @@ export const video = sqliteTable(
       sql`${table.durationMs} > 0 and ${table.durationMs} <= 60000`,
     ),
     check(
+      "video_description_length_check",
+      sql`length(${table.description}) between 1 and 1000`,
+    ),
+    check(
       "video_status_check",
       sql`${table.status} in ('draft', 'published', 'hidden')`,
     ),
   ],
 );
 
-export const tag = sqliteTable("tag", {
-  id: text("id").primaryKey(),
-  name: text("name").notNull(),
-  slug: text("slug").notNull().unique(),
-  createdAt: createdAt(),
-});
+export const tag = sqliteTable(
+  "tag",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    slug: text("slug").notNull().unique(),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    check("tag_name_length_check", sql`length(${table.name}) between 1 and 50`),
+    check("tag_slug_length_check", sql`length(${table.slug}) between 1 and 50`),
+  ],
+);
 
 export const videoTag = sqliteTable(
   "video_tag",
@@ -528,7 +590,7 @@ export const favorite = sqliteTable(
   {
     userId: text("user_id")
       .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
+      .references(() => user.id, { onDelete: "restrict" }),
     videoId: text("video_id")
       .notNull()
       .references(() => video.id, { onDelete: "cascade" }),
@@ -704,6 +766,60 @@ export const stripeWebhookEvent = sqliteTable(
   ],
 );
 
+export const subscriptionEvent = sqliteTable(
+  "subscription_event",
+  {
+    id: text("id").primaryKey(),
+    subscriptionId: text("subscription_id")
+      .notNull()
+      .references(() => subscription.id, { onDelete: "restrict" }),
+    stripeWebhookEventId: text("stripe_webhook_event_id").references(
+      () => stripeWebhookEvent.id,
+      { onDelete: "restrict" },
+    ),
+    type: text("type").$type<SubscriptionEventType>().notNull(),
+    amount: integer("amount"),
+    currency: text("currency").default("jpy").notNull(),
+    stripeObjectId: text("stripe_object_id"),
+    periodStart: integer("period_start", { mode: "timestamp_ms" }),
+    periodEnd: integer("period_end", { mode: "timestamp_ms" }),
+    occurredAt: integer("occurred_at", { mode: "timestamp_ms" }).notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    index("subscription_event_subscription_occurred_at_idx").on(
+      table.subscriptionId,
+      table.occurredAt,
+    ),
+    index("subscription_event_webhook_idx").on(table.stripeWebhookEventId),
+    uniqueIndex("subscription_event_type_stripe_object_uidx")
+      .on(table.type, table.stripeObjectId)
+      .where(sql`${table.stripeObjectId} is not null`),
+    check(
+      "subscription_event_type_check",
+      sql`${table.type} in ('started', 'renewed', 'cancelScheduled', 'ended', 'paymentFailed')`,
+    ),
+    check(
+      "subscription_event_amount_check",
+      sql`(
+        ${table.type} in ('started', 'renewed', 'paymentFailed')
+        and ${table.amount} = 500
+      ) or (
+        ${table.type} in ('cancelScheduled', 'ended')
+        and ${table.amount} is null
+      )`,
+    ),
+    check(
+      "subscription_event_currency_check",
+      sql`${table.currency} = 'jpy'`,
+    ),
+    check(
+      "subscription_event_period_check",
+      sql`${table.periodStart} is null or ${table.periodEnd} is null or ${table.periodStart} < ${table.periodEnd}`,
+    ),
+  ],
+);
+
 export const userProfileRelations = relations(userProfile, ({ one }) => ({
   user: one(user, {
     fields: [userProfile.userId],
@@ -803,16 +919,20 @@ export const videoTagRelations = relations(videoTag, ({ one }) => ({
   }),
 }));
 
-export const subscriptionRelations = relations(subscription, ({ one }) => ({
-  user: one(user, {
-    fields: [subscription.userId],
-    references: [user.id],
+export const subscriptionRelations = relations(
+  subscription,
+  ({ one, many }) => ({
+    user: one(user, {
+      fields: [subscription.userId],
+      references: [user.id],
+    }),
+    zoo: one(zoo, {
+      fields: [subscription.zooId],
+      references: [zoo.id],
+    }),
+    events: many(subscriptionEvent),
   }),
-  zoo: one(zoo, {
-    fields: [subscription.zooId],
-    references: [zoo.id],
-  }),
-}));
+);
 
 export const commentRelations = relations(comment, ({ one }) => ({
   video: one(video, {
@@ -916,3 +1036,24 @@ export const chatMessageRelations = relations(chatMessage, ({ one }) => ({
     references: [user.id],
   }),
 }));
+
+export const stripeWebhookEventRelations = relations(
+  stripeWebhookEvent,
+  ({ many }) => ({
+    subscriptionEvents: many(subscriptionEvent),
+  }),
+);
+
+export const subscriptionEventRelations = relations(
+  subscriptionEvent,
+  ({ one }) => ({
+    subscription: one(subscription, {
+      fields: [subscriptionEvent.subscriptionId],
+      references: [subscription.id],
+    }),
+    stripeWebhookEvent: one(stripeWebhookEvent, {
+      fields: [subscriptionEvent.stripeWebhookEventId],
+      references: [stripeWebhookEvent.id],
+    }),
+  }),
+);
