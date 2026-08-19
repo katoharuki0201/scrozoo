@@ -13,20 +13,13 @@ cp .env.example .env
 
 ## 認証スキーマ生成
 
-`src/auth.ts` の設定から `src/db/auth-schema.ts` を生成し、マイグレーション対象の `src/db/schema.ts` へコピーします。
+`src/auth.ts` の設定から `src/db/auth-schema.ts` を生成します。
 
 ```sh
-bun run auth:schema
+bun run auth:generate
 ```
 
-個別に実行する場合:
-
-```sh
-bun x auth@latest generate --output ./src/db/auth-schema.ts
-bun run auth:sync
-```
-
-`auth-schema.ts` は Better Auth CLI の生成物として編集せず、データベース全体のスキーマとリレーションは `schema.ts` で管理します。`auth.ts` を変更した場合は、必ず再生成・同期してください。
+`auth-schema.ts` は Better Auth CLI の生成物として編集せず、認証部分の変更をマイグレーション対象の `schema.ts` に反映します。業務テーブルは `schema.ts` で管理します。
 
 ## 開発サーバー
 
