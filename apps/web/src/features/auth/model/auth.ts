@@ -5,6 +5,7 @@ export const userSchema = z.object({
   name: z.string(),
   email: z.email(),
   avatarUrl: z.string().nullable(),
+  plan: z.enum(['free', 'supporter']),
 })
 
 export const authSessionSchema = z.object({
