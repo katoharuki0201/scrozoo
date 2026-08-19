@@ -18,13 +18,60 @@ TechJam 2026 の推奨スタックに合わせ、モックを無料枠内で公�
 | 言語 | TypeScript |
 | パッケージ管理 | Bun |
 
-## 構成方針
+## 現在の導入状況
 
-- Bun workspace で `apps/web`、`apps/api`、`packages/shared` に分ける。
+| ディレクトリ | 導入済み |
+| --- | --- |
+| `apps/web` | React 19、Vite 8、TypeScript 6、Oxlint |
+| `apps/api` | Hono 4、TypeScript、Bun による開発サーバー |
+
+Turso、Drizzle ORM、Better Auth、Cloudflare R2、Stripe、QR 関連ライブラリ、Cloudflare デプロイ設定は未導入であり、機能実装時に追加する。
+
+## ディレクトリ構成
+
+```text
+scrozoo/
+├── apps/
+│   ├── web/          # React + Vite
+│   │   ├── src/
+│   │   ├── public/
+│   │   ├── package.json
+│   │   └── bun.lock
+│   └── api/          # Hono
+│       ├── src/
+│       ├── package.json
+│       └── bun.lock
+├── docs/
+└── README.md
+```
+
+## リポジトリ方針
+
+- 単一リポジトリ内にフロントエンドと API をディレクトリ分割して配置する。
+- Bun workspace やルート `package.json` は使わず、`apps/web` と `apps/api` を独立したプロジェクトとして管理する。
+- 依存関係と `bun.lock` は各ディレクトリで個別に管理する。
 - React は Cloudflare Pages、Hono API は Cloudflare Workers Free にデプロイする。
-- API の入出力型と Zod スキーマは `packages/shared` で共有する。
+- API の入出力型は必要になった段階で各プロジェクト内に定義する。共通パッケージは作らない。
 - DB 接続に `@libsql/client/web`、ORM に Drizzle の libSQL ドライバを使う。
 - ローカル開発は Turso の開発 DB、またはローカル SQLite を使う。
+
+## 開発コマンド
+
+フロントエンド:
+
+```sh
+cd apps/web
+bun install
+bun run dev
+```
+
+API:
+
+```sh
+cd apps/api
+bun install
+bun run dev
+```
 
 ## 認証
 

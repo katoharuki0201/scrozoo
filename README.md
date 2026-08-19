@@ -32,7 +32,30 @@ TechJam 2026 チームBの企画として開発しています。
 
 ## 開発状況
 
-現在は要件定義段階です。実行方法や開発コマンドは、実装開始後に追記します。
+現在は要件定義とフレームワークの初期構築まで完了しています。
+
+```text
+apps/web/  React + Vite
+apps/api/  Hono
+```
+
+2つのディレクトリはモノレポの workspace にせず、それぞれ独立した Bun プロジェクトとして管理します。
+
+### フロントエンド
+
+```sh
+cd apps/web
+bun install
+bun run dev
+```
+
+### API
+
+```sh
+cd apps/api
+bun install
+bun run dev
+```
 
 ## チーム
 
