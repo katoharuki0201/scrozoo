@@ -68,18 +68,28 @@ export function AdminSubscribersPage() {
         <AdminCard className="p-5"><p className="text-sm text-slate-500">月間サブスク支援額</p><p className="mt-2 text-3xl font-bold">¥{(allSubscribers.length * 500).toLocaleString()}</p></AdminCard>
       </div>
 
-      <section>
-        <h2 className="mb-3 text-sm font-bold text-slate-700">動物園別の加入状況</h2>
-        <div className="grid grid-cols-3 gap-4">
-          {creatorSummaries.map((creator) => (
-            <button className={`rounded-2xl border bg-white p-5 text-left shadow-sm transition hover:border-sky-300 hover:shadow-md ${creatorId === creator.id ? 'border-sky-500 ring-2 ring-sky-100' : 'border-slate-200'}`} key={creator.id} onClick={() => selectCreator(creator.id)} type="button">
-              <div className="flex items-start justify-between gap-3"><p className="font-semibold text-slate-800">{creator.name}</p><span className="text-xs font-semibold text-sky-700">加入者を見る →</span></div>
-              <p className="mt-4 text-3xl font-bold">{creator.total}<span className="ml-1 text-sm font-medium text-slate-500">人</span></p>
-              <p className="mt-1.5 text-xs text-slate-500">加入中 {creator.total - creator.cancelScheduled}人・解約予定 {creator.cancelScheduled}人</p>
-            </button>
-          ))}
+      <AdminCard>
+        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+          <div><h2 className="text-sm font-bold text-slate-800">動物園別の加入状況</h2><p className="mt-1 text-xs text-slate-500">動物園を選択すると加入者を絞り込めます。</p></div>
+          <span className="text-xs font-medium text-slate-500">{creatorSummaries.length}動物園</span>
         </div>
-      </section>
+        <div className="max-h-64 overflow-y-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="sticky top-0 z-[1] bg-slate-50 text-xs font-semibold text-slate-500"><tr><th className="px-5 py-3">動物園</th><th className="w-28 px-4 py-3 text-right">加入中</th><th className="w-28 px-4 py-3 text-right">解約予定</th><th className="w-24 px-4 py-3 text-right">合計</th><th className="w-28 px-5 py-3 text-right">詳細</th></tr></thead>
+            <tbody className="divide-y divide-slate-100">
+              {creatorSummaries.map((creator) => (
+                <tr className={creatorId === creator.id ? 'bg-sky-50' : 'hover:bg-slate-50/70'} key={creator.id}>
+                  <td className="px-5 py-3 font-semibold text-slate-800">{creator.name}</td>
+                  <td className="px-4 py-3 text-right text-slate-600">{creator.total - creator.cancelScheduled}人</td>
+                  <td className="px-4 py-3 text-right text-slate-600">{creator.cancelScheduled}人</td>
+                  <td className="px-4 py-3 text-right font-bold text-slate-900">{creator.total}人</td>
+                  <td className="px-5 py-3 text-right"><button className="text-xs font-bold text-sky-700 hover:text-sky-900" onClick={() => selectCreator(creator.id)} type="button">加入者を見る</button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </AdminCard>
 
       <AdminCard>
         {filterLabel && <div className="flex items-center justify-between border-b border-sky-100 bg-sky-50 px-5 py-3"><p className="text-sm font-semibold text-sky-900">{filterLabel}を表示しています</p><button className="text-xs font-bold text-sky-700 hover:text-sky-900" onClick={clearRelationFilter} type="button">すべての加入者を表示</button></div>}
