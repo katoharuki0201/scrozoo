@@ -371,6 +371,8 @@ export const video = sqliteTable(
       .references(() => mediaAsset.id, { onDelete: "restrict" }),
     description: text("description").notNull(),
     durationMs: integer("duration_ms").notNull(),
+    viewCount: integer("view_count").default(0).notNull(),
+    thumbnailTime: integer("thumbnail_time").default(0).notNull(),
     status: text("status")
       .$type<"draft" | "published" | "hidden">()
       .default("draft")

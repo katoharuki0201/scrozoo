@@ -1,4 +1,5 @@
-import { and, count, desc, eq, inArray } from "drizzle-orm";
+import { and, count, desc, eq, inArray, sql } from "drizzle-orm";
+import { alias } from "drizzle-orm/sqlite-core";
 import { Hono } from "hono";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
@@ -6,6 +7,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { db } from "../db";
 import {
   comment,
+  animal,
   favorite,
   mediaAsset,
   subscription,
@@ -36,86 +38,106 @@ function initials(name: string) {
     .join("");
 }
 
-async function feedRows(currentUserId?: string) {
+type FeedOptions = { query?: string; limit?: number; cursor?: string };
+
+async function feedRows(currentUserId?: string, options: FeedOptions = {}) {
+  const previewAsset = alias(mediaAsset, "preview_asset");
+  const fullAsset = alias(mediaAsset, "full_asset");
+  const avatarAsset = alias(mediaAsset, "avatar_asset");
+  const query = options.query?.trim().toLocaleLowerCase("ja-JP") ?? "";
+  const limit = Math.min(50, Math.max(1, options.limit ?? 50));
   const rows = await db
     .select({
       id: video.id,
-      objectKey: mediaAsset.objectKey,
+      objectKey: previewAsset.objectKey,
+      fullObjectKey: fullAsset.objectKey,
       zooId: zoo.id,
       zooName: zoo.name,
       publisherUserId: zoo.publisherUserId,
-      fullMediaAssetId: video.fullMediaAssetId,
+      avatarObjectKey: avatarAsset.objectKey,
       caption: video.description,
+      viewCount: video.viewCount,
+      thumbnailTime: video.thumbnailTime,
       publishedAt: video.publishedAt,
     })
     .from(video)
-    .innerJoin(mediaAsset, eq(video.previewMediaAssetId, mediaAsset.id))
+    .innerJoin(previewAsset, eq(video.previewMediaAssetId, previewAsset.id))
+    .innerJoin(fullAsset, eq(video.fullMediaAssetId, fullAsset.id))
     .innerJoin(zoo, eq(video.zooId, zoo.id))
-    .where(and(eq(video.status, "published"), eq(zoo.status, "active")))
-    .orderBy(desc(video.publishedAt));
+    .innerJoin(animal, eq(video.animalId, animal.id))
+    .leftJoin(avatarAsset, eq(zoo.profileMediaAssetId, avatarAsset.id))
+    .where(and(
+      eq(video.status, "published"),
+      eq(zoo.status, "active"),
+      query ? sql`(
+        lower(${video.description}) like ${`%${query}%`} or
+        lower(${zoo.name}) like ${`%${query}%`} or
+        lower(${animal.name}) like ${`%${query}%`} or
+        lower(${animal.species}) like ${`%${query}%`} or
+        exists (select 1 from video_tag vt join tag t on t.id = vt.tag_id where vt.video_id = ${video.id} and lower(t.name) like ${`%${query}%`})
+      )` : undefined,
+    ))
+    .orderBy(desc(video.publishedAt))
+    .limit(options.cursor ? 1000 : limit + 1);
 
-  return Promise.all(rows.map(async (row) => {
-    const [tags, likeTotal, commentTotal, liked, supported] = await Promise.all([
-      db
-        .select({ name: tag.name })
-        .from(videoTag)
-        .innerJoin(tag, eq(videoTag.tagId, tag.id))
-        .where(eq(videoTag.videoId, row.id)),
-      db.select({ value: count() }).from(favorite).where(eq(favorite.videoId, row.id)),
-      db.select({ value: count() }).from(comment).where(eq(comment.videoId, row.id)),
-      currentUserId
-        ? db.select({ userId: favorite.userId }).from(favorite).where(and(eq(favorite.userId, currentUserId), eq(favorite.videoId, row.id))).limit(1)
-        : Promise.resolve([]),
-      currentUserId
-        ? db.select({ id: subscription.id }).from(subscription).where(and(eq(subscription.userId, currentUserId), eq(subscription.zooId, row.zooId), inArray(subscription.status, ["active", "canceling"]))).limit(1)
-        : Promise.resolve([]),
-    ]);
+  const cursorIndex = options.cursor ? rows.findIndex((row) => row.id === options.cursor) : -1;
+  const pageRows = rows.slice(cursorIndex >= 0 ? cursorIndex + 1 : 0, (cursorIndex >= 0 ? cursorIndex + 1 : 0) + limit);
+  const videoIds = pageRows.map((row) => row.id);
+  const zooIds = [...new Set(pageRows.map((row) => row.zooId))];
+  if (videoIds.length === 0) return [];
 
+  const [allTags, likeTotals, commentTotals, likedRows, supportedRows] = await Promise.all([
+    db.select({ videoId: videoTag.videoId, name: tag.name }).from(videoTag).innerJoin(tag, eq(videoTag.tagId, tag.id)).where(inArray(videoTag.videoId, videoIds)),
+    db.select({ videoId: favorite.videoId, value: count() }).from(favorite).where(inArray(favorite.videoId, videoIds)).groupBy(favorite.videoId),
+    db.select({ videoId: comment.videoId, value: count() }).from(comment).where(inArray(comment.videoId, videoIds)).groupBy(comment.videoId),
+    currentUserId ? db.select({ videoId: favorite.videoId }).from(favorite).where(and(eq(favorite.userId, currentUserId), inArray(favorite.videoId, videoIds))) : Promise.resolve([]),
+    currentUserId && zooIds.length ? db.select({ zooId: subscription.zooId }).from(subscription).where(and(eq(subscription.userId, currentUserId), inArray(subscription.zooId, zooIds), inArray(subscription.status, ["active", "canceling"]))) : Promise.resolve([]),
+  ]);
+  const tagsByVideo = new Map<string, string[]>();
+  for (const item of allTags) tagsByVideo.set(item.videoId, [...(tagsByVideo.get(item.videoId) ?? []), item.name]);
+  const likesByVideo = new Map(likeTotals.map((item) => [item.videoId, item.value]));
+  const commentsByVideo = new Map(commentTotals.map((item) => [item.videoId, item.value]));
+  const likedIds = new Set(likedRows.map((item) => item.videoId));
+  const supportedZooIds = new Set(supportedRows.map((item) => item.zooId));
+
+  return Promise.all(pageRows.map(async (row) => {
+    const supported = supportedZooIds.has(row.zooId);
     const canPlayFull = Boolean(currentUserId) && (
-      row.publisherUserId === currentUserId || supported.length > 0
+      row.publisherUserId === currentUserId || supported
     );
     let videoUrl = mediaUrl(row.objectKey);
     if (canPlayFull) {
-      const [fullAsset] = await db.select({ objectKey: mediaAsset.objectKey }).from(mediaAsset)
-        .where(and(eq(mediaAsset.id, row.fullMediaAssetId), eq(mediaAsset.status, "ready"))).limit(1);
-      if (fullAsset) {
-        const env = getApiEnv();
-        videoUrl = await getSignedUrl(getR2Client(), new GetObjectCommand({
-          Bucket: env.R2_PRIVATE_BUCKET_NAME,
-          Key: fullAsset.objectKey,
-        }), { expiresIn: 10 * 60 });
-      }
+      const env = getApiEnv();
+      videoUrl = await getSignedUrl(getR2Client(), new GetObjectCommand({ Bucket: env.R2_PRIVATE_BUCKET_NAME, Key: row.fullObjectKey }), { expiresIn: 10 * 60 });
     }
 
     return {
       id: row.id,
       videoUrl,
-      zoo: { id: row.zooId, name: row.zooName, avatarUrl: "/icon.jpg" },
+      zoo: { id: row.zooId, name: row.zooName, avatarUrl: row.avatarObjectKey ? mediaUrl(row.avatarObjectKey) : "/icon.jpg" },
       caption: row.caption,
-      tags: tags.map((item) => item.name),
-      likeCount: likeTotal[0]?.value ?? 0,
-      commentCount: commentTotal[0]?.value ?? 0,
+      tags: tagsByVideo.get(row.id) ?? [],
+      likeCount: likesByVideo.get(row.id) ?? 0,
+      commentCount: commentsByVideo.get(row.id) ?? 0,
       supportPrice: 500,
-      hasActiveSupportPlan: supported.length > 0,
+      hasActiveSupportPlan: supported,
       supportGoal: null,
-      isLiked: liked.length > 0,
-      viewCount: 0,
-      thumbnailTime: 0,
+      isLiked: likedIds.has(row.id),
+      viewCount: row.viewCount,
+      thumbnailTime: row.thumbnailTime,
       publishedAt: row.publishedAt?.toISOString() ?? new Date(0).toISOString(),
     };
   }));
 }
 
 content.get("/feed", async (c) => {
-  return c.json(await feedRows(c.get("session")?.user.id));
+  return c.json(await feedRows(c.get("session")?.user.id, { limit: Number(c.req.query("limit")) || 50, cursor: c.req.query("cursor") }));
 });
 
 content.get("/search/videos", async (c) => {
   const query = (c.req.query("q") ?? "").trim().toLocaleLowerCase("ja-JP");
   const sort = c.req.query("sort") ?? "latest";
-  const rows = (await feedRows(c.get("session")?.user.id)).filter((item) =>
-    !query || [item.caption, item.zoo.name, ...item.tags].join(" ").toLocaleLowerCase("ja-JP").includes(query),
-  );
+  const rows = await feedRows(c.get("session")?.user.id, { query, limit: Number(c.req.query("limit")) || 50, cursor: c.req.query("cursor") });
   rows.sort((first, second) => {
     if (sort === "popular") return second.viewCount - first.viewCount;
     if (sort === "oldest") return first.publishedAt.localeCompare(second.publishedAt);

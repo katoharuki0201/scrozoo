@@ -60,6 +60,18 @@ async function galleryForUser(userId: string) {
   }));
 }
 
+async function galleryForZoo(zooId: string) {
+  const rows = await db
+    .select({ id: galleryPost.id, objectKey: mediaAsset.objectKey, createdAt: galleryPost.publishedAt, authorId: user.id, authorName: user.name, zooName: zoo.name })
+    .from(galleryPost)
+    .innerJoin(mediaAsset, eq(galleryPost.imageMediaAssetId, mediaAsset.id))
+    .innerJoin(user, eq(galleryPost.userId, user.id))
+    .innerJoin(zoo, eq(galleryPost.zooId, zoo.id))
+    .where(eq(galleryPost.zooId, zooId))
+    .orderBy(desc(galleryPost.publishedAt));
+  return rows.map((row) => ({ id: row.id, imageUrl: mediaUrl(row.objectKey) ?? "", createdAt: row.createdAt.toISOString(), author: { id: row.authorId, name: row.authorName }, zoo: { id: zooId, name: row.zooName } }));
+}
+
 async function creatorProfile(zooId: string) {
   const [zooRow] = await db
     .select({
@@ -80,6 +92,8 @@ async function creatorProfile(zooId: string) {
       id: video.id,
       objectKey: mediaAsset.objectKey,
       title: video.description,
+      viewCount: video.viewCount,
+      thumbnailTime: video.thumbnailTime,
     })
     .from(video)
     .innerJoin(mediaAsset, eq(video.previewMediaAssetId, mediaAsset.id))
@@ -111,10 +125,10 @@ async function creatorProfile(zooId: string) {
       videoId: item.id,
       videoUrl: mediaUrl(item.objectKey) ?? "",
       title: item.title,
-      viewCount: 0,
-      thumbnailTime: 0,
+      viewCount: item.viewCount,
+      thumbnailTime: item.thumbnailTime,
     })),
-    galleryPosts: [],
+    galleryPosts: await galleryForZoo(zooId),
   };
 }
 
