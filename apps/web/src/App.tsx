@@ -14,6 +14,7 @@ import { QrScanPage } from './pages/qr-scan-page'
 import { GalleryCapturePage } from './pages/gallery-capture-page'
 import { SupportPlansPage } from './pages/support-plans-page'
 import { SupportGoalManagementPage } from './pages/support-goal-management-page'
+import { CreatorPostCreationPage } from './pages/creator-post-creation-page'
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
         <Route path="/mypage/account" element={<AccountInformationPage />} />
         <Route path="/mypage/plans" element={<SupportPlansPage />} />
         <Route path="/mypage/support-goal" element={<SupportGoalManagementPage />} />
+        <Route path="/mypage/posts/new" element={<CreatorPostCreationPage />} />
         <Route path="/search" element={<SearchResultsPage />} />
         <Route path="/zoos/:zooId" element={<ZooProfilePage />} />
         <Route path="*" element={<NotFoundPage />} />

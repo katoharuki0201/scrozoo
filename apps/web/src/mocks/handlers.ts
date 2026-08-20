@@ -147,6 +147,11 @@ const createSupportPlanRequestSchema = z.object({
   zooId: z.string(),
 })
 
+const creatorPostMetadataSchema = z.object({
+  caption: z.string().trim().min(1).max(120),
+  tags: z.array(z.string().trim().min(1).max(20)).max(5),
+})
+
 const defaultBio = '【動物動画の鑑賞垢】動物たちの可愛い姿や面白いハプニング動画を見て日々癒やされています。もふもふ系の動画に無言いいね多めです。素敵な投稿いつもありがとうございます！'
 
 const accountByToken = new Map<string, { name: string; email: string; bio: string; role: 'viewer' | 'creator' }>([
@@ -752,6 +757,64 @@ export const handlers = [
     )
 
     return HttpResponse.json(cancelledPlan)
+  }),
+  http.post('*/api/creator/posts', async ({ request }) => {
+    await delay(900)
+
+    const account = accountByToken.get(getToken(request) ?? '')
+
+    if (account?.role !== 'creator') {
+      return HttpResponse.json({ message: 'Forbidden' }, { status: 403 })
+    }
+
+    const formData = await request.formData()
+    const videoFile = formData.get('video')
+    const caption = formData.get('caption')
+    const tagsValue = formData.get('tags')
+    let tags: unknown = []
+
+    try {
+      tags = typeof tagsValue === 'string' ? JSON.parse(tagsValue) : []
+    } catch {
+      return HttpResponse.json({ message: 'Invalid tags' }, { status: 400 })
+    }
+
+    const metadata = creatorPostMetadataSchema.safeParse({ caption, tags })
+
+    if (
+      !(videoFile instanceof File) ||
+      !videoFile.type.startsWith('video/') ||
+      videoFile.size > 200 * 1024 * 1024 ||
+      !metadata.success
+    ) {
+      return HttpResponse.json({ message: 'Invalid post' }, { status: 400 })
+    }
+
+    const id = `creator-video-${Date.now()}`
+    const post = {
+      ...mockVideos[0],
+      id,
+      videoUrl: '/videos/14634386_1080_1920_30fps.mp4',
+      caption: metadata.data.caption,
+      tags: metadata.data.tags,
+      likeCount: 0,
+      commentCount: 0,
+      viewCount: 0,
+      thumbnailTime: 0,
+      publishedAt: new Date().toISOString(),
+    }
+    mockVideos.unshift(post)
+    zooProfileDetails.tama.videoCount += 1
+
+    return HttpResponse.json(
+      {
+        ...post,
+        hasActiveSupportPlan: false,
+        supportGoal: toSupportGoal(supportGoalsByZoo.get('tama')),
+        isLiked: false,
+      },
+      { status: 201 },
+    )
   }),
   http.get('*/api/profiles/me', async ({ request }) => {
     await delay(280)

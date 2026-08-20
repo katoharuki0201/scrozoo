@@ -7,6 +7,7 @@ import {
   ChevronRightIcon,
   ClipboardListIcon,
   TargetIcon,
+  UploadIcon,
 } from '../../../shared/ui/icons'
 import { SupportGoalProgress } from '../../support-goal/components/support-goal-progress'
 import type { GalleryPost, Profile, ProfileViewMode } from '../model/profile'
@@ -39,9 +40,11 @@ export function ProfileScreen({
   return (
     <main className="relative mx-auto h-dvh max-w-[430px] overflow-hidden bg-slate-50 shadow-2xl">
       <div className={`h-full overflow-y-auto ${showSupportButton ? 'pb-43' : 'pb-24'}`}>
-        {searchParams.get('posted') === '1' && (
+        {(searchParams.get('posted') === '1' || searchParams.get('videoPosted') === '1') && (
           <p className="absolute inset-x-6 top-5 z-30 rounded-xl bg-emerald-600 px-4 py-3 text-center text-sm font-bold text-white shadow-lg" role="status">
-            サポーターギャラリーに投稿しました。
+            {searchParams.get('videoPosted') === '1'
+              ? '動画を投稿しました。'
+              : 'サポーターギャラリーに投稿しました。'}
           </p>
         )}
         <section className="relative px-6 pb-8 pt-[max(1.5rem,env(safe-area-inset-top))]">
@@ -88,6 +91,16 @@ export function ProfileScreen({
 
           {viewMode === 'self' && (
             <div className="mt-7 space-y-3">
+              {isCreator && (
+                <Link
+                  className="flex h-17 items-center rounded-2xl bg-slate-900 px-5 text-white active:bg-slate-800"
+                  to="/mypage/posts/new"
+                >
+                  <UploadIcon className="size-8" />
+                  <span className="ml-3 flex-1 text-base font-bold">動画を投稿する</span>
+                  <ChevronRightIcon className="size-7" />
+                </Link>
+              )}
               <Link
                 className="flex h-17 items-center rounded-2xl bg-slate-200 px-5 text-slate-800 active:bg-slate-300"
                 to="/mypage/account"
