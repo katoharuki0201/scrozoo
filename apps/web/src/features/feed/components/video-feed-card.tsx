@@ -111,7 +111,7 @@ export function VideoFeedCard({
       <div className="absolute top-1/2 right-3 z-10 flex -translate-y-1/2 flex-col items-center gap-3">
         <button
           aria-label={`${item.zoo.name}のプロフィール`}
-          className={`size-13 overflow-hidden rounded-full border-2 bg-white shadow-lg ${item.hasActiveSupportPlan ? 'border-emerald-400 ring-2 ring-emerald-400/45' : 'border-white'}`}
+          className={`size-13 overflow-hidden rounded-full border-2 bg-white shadow-lg ${item.hasActiveSupportPlan ? 'border-amber-400 ring-2 ring-amber-400/45' : 'border-white'}`}
           onClick={() => void navigate(`/zoos/${item.zoo.id}`)}
           type="button"
         >
