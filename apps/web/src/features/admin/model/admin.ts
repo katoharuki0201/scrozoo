@@ -59,8 +59,10 @@ export const adminUsersSchema = z.object({ users: z.array(managedUserSchema) })
 
 export const adminSubscriberSchema = z.object({
   id: z.string(),
+  userId: z.string(),
   userName: z.string(),
   email: z.email(),
+  creatorId: z.string(),
   creatorName: z.string(),
   joinedAt: z.string(),
   nextRenewalDate: z.string(),

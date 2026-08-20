@@ -11,7 +11,7 @@ export function AdminDashboardPage() {
   const cards = [
     { label: '総ユーザー数', value: metrics.totalUsers.toLocaleString(), note: `前月比 +${metrics.userGrowthRate}%`, tone: 'text-sky-700 bg-sky-50', icon: '人' },
     { label: 'Creator数', value: metrics.creators.toLocaleString(), note: '稼働中アカウント', tone: 'text-indigo-700 bg-indigo-50', icon: 'C' },
-    { label: 'プラン加入者', value: metrics.activeSubscribers.toLocaleString(), note: '現在加入中', tone: 'text-emerald-700 bg-emerald-50', icon: '♡' },
+    { label: 'プラン契約数', value: metrics.activeSubscribers.toLocaleString(), note: '解約予定を含む', tone: 'text-emerald-700 bg-emerald-50', icon: '♡' },
     { label: '今月の総支援額', value: formatCurrency(metrics.monthlyGross), note: `前月比 +${metrics.revenueGrowthRate}%`, tone: 'text-amber-700 bg-amber-50', icon: '¥' },
     { label: '今月の運営手数料', value: formatCurrency(metrics.monthlyFee), note: '手数料率 10%', tone: 'text-violet-700 bg-violet-50', icon: '%' },
   ]

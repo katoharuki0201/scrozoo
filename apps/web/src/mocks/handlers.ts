@@ -264,15 +264,17 @@ const mockAdminViewers = Array.from({ length: 105 }, (_, index) => ({
   name: `${adminFamilyNames[index % adminFamilyNames.length]} ${adminGivenNames[Math.floor(index / adminFamilyNames.length)]}`,
   email: `user${String(index + 1).padStart(3, '0')}@example.com`,
   role: 'viewer' as const,
-  planStatus: index >= 18 ? 'free' as const : [5, 15].includes(index) ? 'cancel_scheduled' as const : 'active' as const,
+  planStatus: index >= 15 ? 'free' as const : index === 5 ? 'cancel_scheduled' as const : 'active' as const,
   status: index === 93 ? 'suspended' as const : 'active' as const,
   registeredAt: new Date(Date.UTC(2026, 7, 20 - index * 3)).toISOString().slice(0, 10),
 }))
 
 const mockAdminSubscribers = Array.from({ length: 18 }, (_, index) => ({
   id: `admin-subscriber-${index + 1}`,
-  userName: mockAdminViewers[index].name,
-  email: mockAdminViewers[index].email,
+  userId: mockAdminViewers[index < 15 ? index : index - 15].id,
+  userName: mockAdminViewers[index < 15 ? index : index - 15].name,
+  email: mockAdminViewers[index < 15 ? index : index - 15].email,
+  creatorId: index < 8 ? 'creator-tama' : index < 14 ? 'creator-ueno' : 'creator-higashiyama',
   creatorName: index < 8 ? '多摩動物公園' : index < 14 ? '上野動物園' : '東山動植物園',
   joinedAt: `2026-${String(Math.max(1, 8 - (index % 7))).padStart(2, '0')}-${String((index % 20) + 1).padStart(2, '0')}`,
   nextRenewalDate: `2026-09-${String((index % 24) + 1).padStart(2, '0')}`,
