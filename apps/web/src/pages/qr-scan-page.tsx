@@ -84,8 +84,7 @@ export function QrScanPage() {
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/80" />
 
       <header className="absolute inset-x-0 top-0 z-10 px-5 pt-[max(1.5rem,env(safe-area-inset-top))] text-center">
-        <p className="text-xs font-bold tracking-[0.18em] text-orange-400 uppercase">Scrozoo</p>
-        <h1 className="mt-2 text-xl font-black">QRコードを読み取る</h1>
+        <h1 className="text-xl font-black">QRコードを読み取る</h1>
         <p className="mt-2 text-sm text-white/75">動物園内のScrozoo QRコードを枠内に合わせてください</p>
       </header>
 

@@ -145,10 +145,7 @@ export function GalleryCapturePage() {
         <Link aria-label="QR読み取りに戻る" className="grid size-11 place-items-center rounded-full bg-black/35 backdrop-blur-sm" to="/scan">
           <ChevronLeftIcon className="size-8" />
         </Link>
-        <div>
-          <p className="text-xs font-bold text-orange-300">{sessionQuery.data.zoo.name}</p>
-          <h1 className="text-lg font-black">{imageDataUrl ? '投稿する写真を確認' : '写真を撮影・選択'}</h1>
-        </div>
+        <h1 className="text-lg font-black">{imageDataUrl ? '投稿する写真を確認' : '写真を撮影・選択'}</h1>
       </header>
 
       {!imageDataUrl && cameraError && (
