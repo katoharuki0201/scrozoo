@@ -6,7 +6,7 @@ export const feedVideoSchema = z.object({
   zoo: z.object({
     id: z.string(),
     name: z.string(),
-    initials: z.string(),
+    avatarUrl: z.string(),
   }),
   caption: z.string(),
   tags: z.array(z.string()),

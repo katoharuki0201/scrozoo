@@ -156,14 +156,18 @@ export function VideoFeedCard({
         <VolumeIcon className="size-5" muted={isMuted} />
       </button>
 
-      <div className="absolute right-3 bottom-49 z-10 flex flex-col items-center gap-3">
+      <div className="absolute top-1/2 right-3 z-10 flex -translate-y-1/2 flex-col items-center gap-3">
         <button
           aria-label={`${item.zoo.name}のプロフィール`}
-          className="grid size-13 place-items-center rounded-full border-2 border-white bg-gradient-to-br from-orange-300 to-rose-500 text-[10px] font-black shadow-lg"
+          className="size-13 overflow-hidden rounded-full border-2 border-white bg-white shadow-lg"
           onClick={() => void navigate(`/zoos/${item.zoo.id}`)}
           type="button"
         >
-          {item.zoo.initials}
+          <img
+            alt=""
+            className="size-full object-cover"
+            src={item.zoo.avatarUrl}
+          />
         </button>
         <FeedAction count={item.likeCount} label="いいね" onClick={onLike}>
           <HeartIcon className={`size-8 ${item.isLiked ? 'text-rose-500' : ''}`} fill={item.isLiked ? 'currentColor' : 'none'} />

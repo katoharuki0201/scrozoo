@@ -102,7 +102,7 @@ export const handlers = [
       {
         id: 'kangaroo-snow',
         videoUrl: '/videos/14634386_1080_1920_30fps.mp4',
-        zoo: { id: 'tama', name: '多摩動物公園', initials: '多摩' },
+        zoo: { id: 'tama', name: '多摩動物公園', avatarUrl: '/icon.jpg' },
         caption: '雪の日も元気いっぱい。親子で過ごすカンガルーたちの朝',
         tags: ['カンガルー', '雪の動物園', '多摩動物公園'],
         likeCount: 102,
@@ -112,7 +112,7 @@ export const handlers = [
       {
         id: 'tiger-walk',
         videoUrl: '/videos/14807282_2160_3840_30fps.mp4',
-        zoo: { id: 'higashiyama', name: '東山動植物園', initials: '東山' },
+        zoo: { id: 'higashiyama', name: '東山動植物園', avatarUrl: '/icon.jpg' },
         caption: 'ゆっくりと園内をお散歩中。迫力たっぷりなトラの横顔に注目',
         tags: ['トラ', '東山動植物園', '動物の日常'],
         likeCount: 284,
@@ -122,7 +122,7 @@ export const handlers = [
       {
         id: 'giraffe-herd',
         videoUrl: '/videos/15039194_2160_3840_30fps.mp4',
-        zoo: { id: 'ueno', name: '上野動物園', initials: '上野' },
+        zoo: { id: 'ueno', name: '上野動物園', avatarUrl: '/icon.jpg' },
         caption: 'みんなで並んでお散歩。青空の下で過ごすキリンたちの日常',
         tags: ['キリン', '上野動物園', '動物の日常'],
         likeCount: 196,
