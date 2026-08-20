@@ -193,10 +193,10 @@ export function HomePage() {
 
         {sheet === 'support' && (
           <FeedSheet onClose={() => setSheet(null)} title="応援プラン">
-            <div className={`mt-5 rounded-2xl p-5 ${activeVideo?.hasActiveSupportPlan ? 'border border-amber-200 bg-amber-50' : 'bg-orange-50'}`}>
-              <p className="text-sm font-bold text-orange-700">{activeVideo?.zoo.name}を応援</p>
+            <div className={`mt-5 rounded-2xl p-5 ${activeVideo?.hasActiveSupportPlan ? 'border border-emerald-200 bg-emerald-50' : 'bg-orange-50'}`}>
+              <p className={`text-sm font-bold ${activeVideo?.hasActiveSupportPlan ? 'text-emerald-700' : 'text-orange-700'}`}>{activeVideo?.zoo.name}を応援</p>
               <p className="mt-2 text-3xl font-black">
-                {activeVideo?.hasActiveSupportPlan ? '応援プラン加入中' : `${activeVideo?.supportPrice}円`}
+                {activeVideo?.hasActiveSupportPlan ? '加入中' : `${activeVideo?.supportPrice}円`}
                 {!activeVideo?.hasActiveSupportPlan && <span className="text-sm font-medium text-slate-500"> / 月</span>}
               </p>
               <p className="mt-3 text-sm leading-6 text-slate-600">動画を最後まで視聴しながら、動物たちの暮らしを応援できます。</p>

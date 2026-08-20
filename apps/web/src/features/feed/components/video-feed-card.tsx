@@ -111,7 +111,7 @@ export function VideoFeedCard({
       <div className="absolute top-1/2 right-3 z-10 flex -translate-y-1/2 flex-col items-center gap-3">
         <button
           aria-label={`${item.zoo.name}のプロフィール`}
-          className={`size-13 overflow-hidden rounded-full border-2 bg-white shadow-lg ${item.hasActiveSupportPlan ? 'border-amber-400 ring-2 ring-amber-400/45' : 'border-white'}`}
+          className={`size-13 overflow-hidden rounded-full border-2 bg-white shadow-lg ${item.hasActiveSupportPlan ? 'border-emerald-400 ring-2 ring-emerald-400/45' : 'border-white'}`}
           onClick={() => void navigate(`/zoos/${item.zoo.id}`)}
           type="button"
         >
@@ -131,9 +131,9 @@ export function VideoFeedCard({
 
       <div className="pointer-events-none absolute inset-x-0 bottom-21 z-10 px-4 pr-19">
         {item.hasActiveSupportPlan && (
-          <div className="mb-2 flex w-fit items-center gap-1 rounded-full border border-amber-300/70 bg-amber-400 px-2.5 py-1 text-[11px] font-black text-slate-950 shadow-lg">
+          <div className="mb-2 flex w-fit items-center gap-1 rounded-full border border-emerald-300/70 bg-emerald-500 px-2.5 py-1 text-[11px] font-black text-white shadow-lg">
             <CheckIcon className="size-3.5" />
-            応援プラン加入中
+            加入中
           </div>
         )}
         <button
