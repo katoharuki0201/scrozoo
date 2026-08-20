@@ -1,13 +1,20 @@
 import { VideoGridTile } from '../../../shared/ui/video-grid-tile'
 import type { GalleryPost, ProfileVideo } from '../model/profile'
 
-export function ProfileVideoGrid({ items }: { items: ProfileVideo[] }) {
+export function ProfileVideoGrid({
+  items,
+  creatorView = false,
+}: {
+  items: ProfileVideo[]
+  creatorView?: boolean
+}) {
   return (
     <div className="grid grid-cols-3 gap-1">
       {items.map((item) => (
         <VideoGridTile
           item={{ ...item, id: item.videoId }}
           key={item.id}
+          to={creatorView ? `/mypage/videos/${encodeURIComponent(item.videoId)}` : undefined}
         />
       ))}
     </div>

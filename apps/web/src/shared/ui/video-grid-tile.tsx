@@ -15,12 +15,18 @@ function formatVideoViewCount(count: number) {
     : count.toLocaleString('ja-JP')
 }
 
-export function VideoGridTile({ item }: { item: VideoGridItem }) {
+export function VideoGridTile({
+  item,
+  to = `/?video=${encodeURIComponent(item.id)}`,
+}: {
+  item: VideoGridItem
+  to?: string
+}) {
   return (
     <Link
       aria-label={`${item.title}、${formatVideoViewCount(item.viewCount)}回再生`}
       className="group relative aspect-[3/4] min-w-0 overflow-hidden bg-slate-200"
-      to={`/?video=${encodeURIComponent(item.id)}`}
+      to={to}
     >
       <video
         aria-hidden="true"

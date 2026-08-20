@@ -10,8 +10,8 @@ const viewerItems = [
 ]
 
 const creatorItems = [
-  { to: '/mypage/posts/new', label: '投稿作成', icon: UploadIcon },
   { to: '/mypage', label: 'マイページ', icon: UserIcon },
+  { to: '/mypage/posts/new', label: '投稿作成', icon: UploadIcon },
   { to: '/mypage/supporters', label: 'サポーター', icon: UsersIcon },
 ]
 

@@ -18,6 +18,7 @@ import { SupportPlansPage } from './pages/support-plans-page'
 import { SupportGoalManagementPage } from './pages/support-goal-management-page'
 import { CreatorPostCreationPage } from './pages/creator-post-creation-page'
 import { CreatorSupportersPage } from './pages/creator-supporters-page'
+import { CreatorVideoPage } from './pages/creator-video-page'
 
 function App() {
   return (
@@ -44,6 +45,7 @@ function App() {
         <Route element={<CreatorOnlyRoute />}>
           <Route path="/mypage/support-goal" element={<SupportGoalManagementPage />} />
           <Route path="/mypage/posts/new" element={<CreatorPostCreationPage />} />
+          <Route path="/mypage/videos/:videoId" element={<CreatorVideoPage />} />
           <Route path="/mypage/supporters" element={<CreatorSupportersPage />} />
         </Route>
 

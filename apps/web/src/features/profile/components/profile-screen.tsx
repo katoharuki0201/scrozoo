@@ -169,7 +169,7 @@ export function ProfileScreen({
               {isSupporterGallery ? (
                 <ProfileGalleryGrid items={profile.galleryPosts} onSelect={setSelectedPost} />
               ) : (
-                <ProfileVideoGrid items={profile.videos} />
+                <ProfileVideoGrid items={profile.videos} creatorView={viewMode === 'self'} />
               )}
             </div>
           </div>
