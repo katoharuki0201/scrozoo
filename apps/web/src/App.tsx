@@ -9,6 +9,7 @@ import { SearchResultsPage } from './pages/search-results-page'
 import { MyProfilePage } from './pages/my-profile-page'
 import { ZooProfilePage } from './pages/zoo-profile-page'
 import { AccountInformationPage } from './pages/account-information-page'
+import { FavoritesPage } from './pages/favorites-page'
 
 function App() {
   return (
@@ -20,7 +21,7 @@ function App() {
       <Route element={<ProtectedRoute />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/scan" element={<PlaceholderPage title="QR読み込み" />} />
-        <Route path="/favorites" element={<PlaceholderPage title="お気に入り" />} />
+        <Route path="/favorites" element={<FavoritesPage />} />
         <Route path="/mypage" element={<MyProfilePage />} />
         <Route path="/mypage/account" element={<AccountInformationPage />} />
         <Route path="/search" element={<SearchResultsPage />} />

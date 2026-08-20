@@ -4,7 +4,13 @@ import { z } from 'zod'
 const MOCK_EMAIL_TOKEN = 'mock-email-session-token'
 const MOCK_GOOGLE_TOKEN = 'mock-google-session-token'
 
-let likedVideoIds = new Set<string>()
+let likedVideoIds = new Set<string>([
+  'kangaroo-snow',
+  'tiger-closeup',
+  'giraffe-herd',
+  'tiger-patrol',
+  'giraffe-sky',
+])
 
 const commentRequestSchema = z.object({
   message: z.string().trim().min(1).max(200),
@@ -462,6 +468,30 @@ export const handlers = [
 
       return second.publishedAt.localeCompare(first.publishedAt)
     })
+
+    return HttpResponse.json(
+      sorted.map(({ id, videoUrl, caption, viewCount, thumbnailTime, publishedAt }) => ({
+        id,
+        videoUrl,
+        title: caption,
+        viewCount,
+        thumbnailTime,
+        publishedAt,
+      })),
+    )
+  }),
+  http.get('*/api/favorites', async ({ request }) => {
+    await delay(300)
+
+    const sort = new URL(request.url).searchParams.get('sort') ?? 'latest'
+    const sorted = mockVideos
+      .filter((video) => likedVideoIds.has(video.id))
+      .toSorted((first, second) => {
+        if (sort === 'popular') return second.viewCount - first.viewCount
+        if (sort === 'oldest') return first.publishedAt.localeCompare(second.publishedAt)
+
+        return second.publishedAt.localeCompare(first.publishedAt)
+      })
 
     return HttpResponse.json(
       sorted.map(({ id, videoUrl, caption, viewCount, thumbnailTime, publishedAt }) => ({

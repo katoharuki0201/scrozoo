@@ -77,6 +77,9 @@ export function HomePage() {
     onError: (_error, _videoId, context) => {
       queryClient.setQueryData(feedQueryOptions.queryKey, context?.previous)
     },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: ['favorites'] })
+    },
   })
 
   function submitSearch(event: React.FormEvent<HTMLFormElement>) {
