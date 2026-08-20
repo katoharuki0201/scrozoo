@@ -67,6 +67,15 @@ const accountInformationRequestSchema = z.object({
   bio: z.string().trim().max(200),
 })
 
+const qrVerificationRequestSchema = z.object({
+  payload: z.string(),
+})
+
+const galleryPostRequestSchema = z.object({
+  sessionId: z.string(),
+  imageDataUrl: z.string().startsWith('data:image/'),
+})
+
 const defaultBio = '【動物動画の鑑賞垢】動物たちの可愛い姿や面白いハプニング動画を見て日々癒やされています。もふもふ系の動画に無言いいね多めです。素敵な投稿いつもありがとうございます！'
 
 const accountByToken = new Map([
@@ -231,7 +240,6 @@ const mockGalleryPosts = [
   {
     id: 'gallery-penguins',
     imageUrl: '/gallery01.jpg',
-    caption: 'みんなでお散歩中のペンギンたち。とても賢く並んでいました！',
     createdAt: '2026-08-19T11:30:00.000Z',
     author: { id: 'mock-google-user', name: 'Google User' },
     zoo: { id: 'higashiyama', name: '東山動植物園' },
@@ -239,7 +247,6 @@ const mockGalleryPosts = [
   {
     id: 'gallery-hippo',
     imageUrl: '/gallery02.jpg',
-    caption: '水辺をゆっくり歩くカバに会えました。近くで見ると迫力満点です。',
     createdAt: '2026-08-18T14:10:00.000Z',
     author: { id: 'mock-google-user', name: 'Google User' },
     zoo: { id: 'higashiyama', name: '東山動植物園' },
@@ -247,12 +254,21 @@ const mockGalleryPosts = [
   {
     id: 'gallery-monkeys',
     imageUrl: '/gallery03.jpg',
-    caption: '仲良く寄り添うニホンザル。ほっこりする瞬間を撮影できました。',
     createdAt: '2026-08-17T09:45:00.000Z',
     author: { id: 'mock-google-user', name: 'Google User' },
     zoo: { id: 'higashiyama', name: '東山動植物園' },
   },
 ]
+
+const qrVisitSessions = new Map<
+  string,
+  {
+    sessionId: string
+    zoo: { id: string; name: string }
+    expiresAt: string
+    used: boolean
+  }
+>()
 
 export const handlers = [
   http.get('*/api/health', async () => {
@@ -346,6 +362,91 @@ export const handlers = [
     await delay(200)
 
     return new HttpResponse(null, { status: 204 })
+  }),
+  http.post('*/api/qr/verify', async ({ request }) => {
+    await delay(450)
+
+    const token = getToken(request)
+    const result = qrVerificationRequestSchema.safeParse(await request.json())
+
+    if (token !== MOCK_EMAIL_TOKEN && token !== MOCK_GOOGLE_TOKEN) {
+      return HttpResponse.json({ message: 'Unauthorized' }, { status: 401 })
+    }
+
+    if (!result.success || result.data.payload !== 'scrozoo:visit:higashiyama:demo-2026') {
+      return HttpResponse.json({ message: 'Invalid QR code' }, { status: 400 })
+    }
+
+    const sessionId = crypto.randomUUID()
+    const session = {
+      sessionId,
+      zoo: { id: 'higashiyama', name: '東山動植物園' },
+      expiresAt: new Date(Date.now() + 30 * 60_000).toISOString(),
+      used: false,
+    }
+    qrVisitSessions.set(sessionId, session)
+
+    return HttpResponse.json({
+      sessionId: session.sessionId,
+      zoo: session.zoo,
+      expiresAt: session.expiresAt,
+    })
+  }),
+  http.get('*/api/qr/sessions/:sessionId', async ({ params, request }) => {
+    await delay(250)
+
+    const token = getToken(request)
+    const session = qrVisitSessions.get(String(params.sessionId))
+
+    if (token !== MOCK_EMAIL_TOKEN && token !== MOCK_GOOGLE_TOKEN) {
+      return HttpResponse.json({ message: 'Unauthorized' }, { status: 401 })
+    }
+
+    if (!session || session.used || new Date(session.expiresAt).getTime() <= Date.now()) {
+      return HttpResponse.json({ message: 'Visit session expired' }, { status: 404 })
+    }
+
+    return HttpResponse.json({
+      sessionId: session.sessionId,
+      zoo: session.zoo,
+      expiresAt: session.expiresAt,
+    })
+  }),
+  http.post('*/api/gallery/posts', async ({ request }) => {
+    await delay(600)
+
+    const token = getToken(request) ?? ''
+    const account = accountByToken.get(token)
+    const result = galleryPostRequestSchema.safeParse(await request.json())
+
+    if (!account) {
+      return HttpResponse.json({ message: 'Unauthorized' }, { status: 401 })
+    }
+
+    if (!result.success) {
+      return HttpResponse.json({ message: 'Invalid image' }, { status: 400 })
+    }
+
+    const session = qrVisitSessions.get(result.data.sessionId)
+
+    if (!session || session.used || new Date(session.expiresAt).getTime() <= Date.now()) {
+      return HttpResponse.json({ message: 'Visit session expired' }, { status: 400 })
+    }
+
+    const post = {
+      id: crypto.randomUUID(),
+      imageUrl: result.data.imageDataUrl,
+      createdAt: new Date().toISOString(),
+      author: {
+        id: token === MOCK_GOOGLE_TOKEN ? 'mock-google-user' : 'mock-email-user',
+        name: account.name,
+      },
+      zoo: session.zoo,
+    }
+    session.used = true
+    mockGalleryPosts.unshift(post)
+
+    return HttpResponse.json(post, { status: 201 })
   }),
   http.get('*/api/profiles/me/account', async ({ request }) => {
     await delay(250)

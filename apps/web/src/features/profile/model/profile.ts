@@ -14,7 +14,6 @@ export const profileVideoSchema = z.object({
 export const galleryPostSchema = z.object({
   id: z.string(),
   imageUrl: z.string(),
-  caption: z.string(),
   createdAt: z.string(),
   author: z.object({
     id: z.string(),

@@ -62,3 +62,11 @@ export function ChevronRightIcon(props: IconProps) {
 export function AccountCircleIcon(props: IconProps) {
   return <svg {...defaults} {...props}><circle cx="12" cy="12" r="9" /><circle cx="12" cy="9" r="3" /><path d="M6.7 18a6 6 0 0 1 10.6 0" /></svg>
 }
+
+export function CameraIcon(props: IconProps) {
+  return <svg {...defaults} {...props}><path d="M14.5 5 13 3h-2L9.5 5H5a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2z" /><circle cx="12" cy="12.5" r="4" /></svg>
+}
+
+export function ImageIcon(props: IconProps) {
+  return <svg {...defaults} {...props}><rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="8.5" cy="9" r="1.5" /><path d="m21 15-5-5L5 20" /></svg>
+}

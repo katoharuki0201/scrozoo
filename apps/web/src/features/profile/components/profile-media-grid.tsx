@@ -33,7 +33,7 @@ export function ProfileGalleryGrid({
     <div className="grid grid-cols-3 gap-1">
       {items.map((item) => (
         <button
-          aria-label={`${item.caption}の写真を見る`}
+          aria-label="ギャラリーの写真を見る"
           className="aspect-square min-w-0 overflow-hidden bg-slate-200 active:opacity-80"
           key={item.id}
           onClick={() => onSelect(item)}

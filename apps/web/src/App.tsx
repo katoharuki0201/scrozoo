@@ -4,12 +4,13 @@ import { ProtectedRoute } from './features/auth/components/protected-route'
 import { HomePage } from './pages/home-page'
 import { LoginPage } from './pages/login-page'
 import { NotFoundPage } from './pages/not-found-page'
-import { PlaceholderPage } from './pages/placeholder-page'
 import { SearchResultsPage } from './pages/search-results-page'
 import { MyProfilePage } from './pages/my-profile-page'
 import { ZooProfilePage } from './pages/zoo-profile-page'
 import { AccountInformationPage } from './pages/account-information-page'
 import { FavoritesPage } from './pages/favorites-page'
+import { QrScanPage } from './pages/qr-scan-page'
+import { GalleryCapturePage } from './pages/gallery-capture-page'
 
 function App() {
   return (
@@ -20,7 +21,8 @@ function App() {
 
       <Route element={<ProtectedRoute />}>
         <Route path="/" element={<HomePage />} />
-        <Route path="/scan" element={<PlaceholderPage title="QR読み込み" />} />
+        <Route path="/scan" element={<QrScanPage />} />
+        <Route path="/scan/capture/:sessionId" element={<GalleryCapturePage />} />
         <Route path="/favorites" element={<FavoritesPage />} />
         <Route path="/mypage" element={<MyProfilePage />} />
         <Route path="/mypage/account" element={<AccountInformationPage />} />

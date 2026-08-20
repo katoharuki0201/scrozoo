@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import { BottomNavigation } from '../../../shared/ui/bottom-navigation'
 import {
   AccountCircleIcon,
@@ -22,7 +22,10 @@ export function ProfileScreen({
   viewMode: ProfileViewMode
   onSupport?: () => void
 }) {
-  const [tab, setTab] = useState<ProfileTab>('videos')
+  const [searchParams] = useSearchParams()
+  const [tab, setTab] = useState<ProfileTab>(
+    searchParams.get('tab') === 'gallery' ? 'supporter-gallery' : 'videos',
+  )
   const [selectedPost, setSelectedPost] = useState<GalleryPost | null>(null)
   const isCreator = profile.accountRole === 'creator'
   const isSupporterGallery = isCreator && tab === 'supporter-gallery'
@@ -31,6 +34,11 @@ export function ProfileScreen({
   return (
     <main className="relative mx-auto h-dvh max-w-[430px] overflow-hidden bg-slate-50 shadow-2xl">
       <div className={`h-full overflow-y-auto ${showSupportButton ? 'pb-43' : 'pb-24'}`}>
+        {searchParams.get('posted') === '1' && (
+          <p className="absolute inset-x-6 top-5 z-30 rounded-xl bg-emerald-600 px-4 py-3 text-center text-sm font-bold text-white shadow-lg" role="status">
+            サポーターギャラリーに投稿しました。
+          </p>
+        )}
         <section className="relative px-6 pb-8 pt-[max(1.5rem,env(safe-area-inset-top))]">
           {viewMode === 'public' ? (
             <Link
