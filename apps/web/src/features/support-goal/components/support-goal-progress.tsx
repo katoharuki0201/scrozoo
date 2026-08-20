@@ -32,14 +32,11 @@ export function SupportGoalProgress({
       }`}
     >
       <div className="flex items-center justify-between gap-3">
-        <p className={`text-[10px] font-black tracking-wider ${overlay ? 'text-emerald-300' : 'text-emerald-600'}`}>
-          応援目標
-        </p>
+        <h2 className="line-clamp-1 text-sm font-black">{goal.title}</h2>
         <span className={`rounded-full px-2 py-0.5 text-[10px] font-black ${achieved ? 'bg-emerald-500 text-white' : expired ? 'bg-slate-500 text-white' : overlay ? 'bg-white/15 text-white' : 'bg-emerald-50 text-emerald-700'}`}>
           {statusLabel}
         </span>
       </div>
-      <h2 className="mt-1.5 line-clamp-1 text-sm font-black">{goal.title}</h2>
       <div
         aria-label={`目標達成率 ${percentage}%`}
         aria-valuemax={100}
