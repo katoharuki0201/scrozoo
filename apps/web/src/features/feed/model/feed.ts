@@ -13,6 +13,7 @@ export const feedVideoSchema = z.object({
   likeCount: z.number(),
   commentCount: z.number(),
   supportPrice: z.number(),
+  hasActiveSupportPlan: z.boolean(),
   isLiked: z.boolean(),
 })
 

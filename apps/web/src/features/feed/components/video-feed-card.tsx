@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import type { FeedVideo } from '../model/feed'
 import { FeedAction } from './feed-action'
-import { HeartIcon, MessageIcon, PlayIcon, VolumeIcon } from '../../../shared/ui/icons'
+import { CheckIcon, HeartIcon, MessageIcon, PlayIcon, VolumeIcon } from '../../../shared/ui/icons'
 
 const FREE_PREVIEW_SECONDS = 5
 
@@ -43,7 +43,12 @@ export function VideoFeedCard({
   function handleTimeUpdate() {
     const video = videoRef.current
 
-    if (!video || !isFreeUser || video.currentTime < FREE_PREVIEW_SECONDS) {
+    if (
+      !video ||
+      !isFreeUser ||
+      item.hasActiveSupportPlan ||
+      video.currentTime < FREE_PREVIEW_SECONDS
+    ) {
       return
     }
 
@@ -68,7 +73,7 @@ export function VideoFeedCard({
     <article className="relative h-full w-full snap-start overflow-hidden bg-slate-950 text-white">
       <video
         className="absolute inset-0 size-full object-cover"
-        loop={!isFreeUser}
+        loop={!isFreeUser || item.hasActiveSupportPlan}
         muted={isMuted}
         onClick={togglePlayback}
         onPause={() => setIsPaused(true)}
@@ -105,7 +110,7 @@ export function VideoFeedCard({
       <div className="absolute top-1/2 right-3 z-10 flex -translate-y-1/2 flex-col items-center gap-3">
         <button
           aria-label={`${item.zoo.name}のプロフィール`}
-          className="size-13 overflow-hidden rounded-full border-2 border-white bg-white shadow-lg"
+          className={`size-13 overflow-hidden rounded-full border-2 bg-white shadow-lg ${item.hasActiveSupportPlan ? 'border-amber-400 ring-2 ring-amber-400/45' : 'border-white'}`}
           onClick={() => void navigate(`/zoos/${item.zoo.id}`)}
           type="button"
         >
@@ -124,6 +129,12 @@ export function VideoFeedCard({
       </div>
 
       <div className="pointer-events-none absolute inset-x-0 bottom-21 z-10 px-4 pr-19">
+        {item.hasActiveSupportPlan && (
+          <div className="mb-2 flex w-fit items-center gap-1 rounded-full border border-amber-300/70 bg-amber-400 px-2.5 py-1 text-[11px] font-black text-slate-950 shadow-lg">
+            <CheckIcon className="size-3.5" />
+            応援プラン加入中
+          </div>
+        )}
         <button
           className="pointer-events-auto text-left text-base font-bold drop-shadow-md"
           onClick={() => void navigate(`/zoos/${item.zoo.id}`)}
@@ -136,11 +147,15 @@ export function VideoFeedCard({
           {item.tags.map((tag) => `#${tag}`).join('  ')}
         </p>
         <button
-          className="pointer-events-auto mt-3 h-11 w-[calc(100vw-2rem)] max-w-[398px] rounded-xl bg-gradient-to-r from-orange-400 via-rose-500 to-sky-400 px-4 text-sm font-bold text-white shadow-lg active:scale-[0.99]"
+          className={`pointer-events-auto mt-3 h-11 w-[calc(100vw-2rem)] max-w-[398px] rounded-xl px-4 text-sm font-bold text-white shadow-lg active:scale-[0.99] ${item.hasActiveSupportPlan ? 'border border-amber-300/70 bg-amber-400/25 backdrop-blur-md' : 'bg-gradient-to-r from-orange-400 via-rose-500 to-sky-400'}`}
           onClick={onSupport}
           type="button"
         >
-          応援プラン <span className="text-xl">{item.supportPrice}円</span> はこちら！
+          {item.hasActiveSupportPlan ? (
+            <span className="inline-flex items-center gap-1.5"><CheckIcon className="size-4" />{item.zoo.name}を応援中</span>
+          ) : (
+            <>応援プラン <span className="text-xl">{item.supportPrice}円</span> はこちら！</>
+          )}
         </button>
       </div>
     </article>

@@ -70,3 +70,11 @@ export function CameraIcon(props: IconProps) {
 export function ImageIcon(props: IconProps) {
   return <svg {...defaults} {...props}><rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="8.5" cy="9" r="1.5" /><path d="m21 15-5-5L5 20" /></svg>
 }
+
+export function SuperChatIcon(props: IconProps) {
+  return <svg {...defaults} {...props}><circle cx="12" cy="12" r="9" /><path d="M9 7.5h6M12 7.5v9M9 11h6M9 14.5h6" /></svg>
+}
+
+export function CheckIcon(props: IconProps) {
+  return <svg {...defaults} {...props}><path d="m5 12 4 4L19 6" /></svg>
+}

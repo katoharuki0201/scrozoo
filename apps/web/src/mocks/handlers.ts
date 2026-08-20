@@ -12,6 +12,8 @@ let likedVideoIds = new Set<string>([
   'giraffe-sky',
 ])
 
+const supportedZooIds = new Set(['higashiyama'])
+
 const commentRequestSchema = z.object({
   message: z.string().trim().min(1).max(200),
   tipAmount: z.union([z.literal(0), z.literal(100), z.literal(300), z.literal(500)]),
@@ -543,6 +545,7 @@ export const handlers = [
     return HttpResponse.json(
       mockVideos.map((video) => ({
         ...video,
+        hasActiveSupportPlan: supportedZooIds.has(video.zoo.id),
         isLiked: likedVideoIds.has(video.id),
         likeCount: video.likeCount + (likedVideoIds.has(video.id) ? 1 : 0),
       })),
@@ -637,11 +640,12 @@ export const handlers = [
     }
 
     const videoId = String(params.videoId)
+    const video = mockVideos.find((item) => item.id === videoId)
     const comment = {
       id: crypto.randomUUID(),
       author: { name: 'Google User', initials: 'GU' },
       message: result.data.message,
-      isSupporter: false,
+      isSupporter: video ? supportedZooIds.has(video.zoo.id) : false,
       tipAmount: result.data.tipAmount,
       createdAt: new Date().toISOString(),
     }

@@ -157,12 +157,17 @@ export function HomePage() {
 
         {sheet === 'support' && (
           <FeedSheet onClose={() => setSheet(null)} title="応援プラン">
-            <div className="mt-5 rounded-2xl bg-orange-50 p-5">
+            <div className={`mt-5 rounded-2xl p-5 ${activeVideo?.hasActiveSupportPlan ? 'border border-amber-200 bg-amber-50' : 'bg-orange-50'}`}>
               <p className="text-sm font-bold text-orange-700">{activeVideo?.zoo.name}を応援</p>
-              <p className="mt-2 text-3xl font-black">{activeVideo?.supportPrice}円<span className="text-sm font-medium text-slate-500"> / 月</span></p>
+              <p className="mt-2 text-3xl font-black">
+                {activeVideo?.hasActiveSupportPlan ? '応援プラン加入中' : `${activeVideo?.supportPrice}円`}
+                {!activeVideo?.hasActiveSupportPlan && <span className="text-sm font-medium text-slate-500"> / 月</span>}
+              </p>
               <p className="mt-3 text-sm leading-6 text-slate-600">動画を最後まで視聴しながら、動物たちの暮らしを応援できます。</p>
             </div>
-            <button className="mt-4 h-12 w-full rounded-xl bg-gradient-to-r from-orange-400 via-rose-500 to-sky-400 text-sm font-bold text-white" type="button">応援プランに参加する</button>
+            {!activeVideo?.hasActiveSupportPlan && (
+              <button className="mt-4 h-12 w-full rounded-xl bg-gradient-to-r from-orange-400 via-rose-500 to-sky-400 text-sm font-bold text-white" type="button">応援プランに参加する</button>
+            )}
           </FeedSheet>
         )}
       </div>
