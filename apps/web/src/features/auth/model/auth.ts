@@ -6,6 +6,7 @@ export const userSchema = z.object({
   email: z.email(),
   avatarUrl: z.string().nullable(),
   plan: z.enum(['free', 'supporter']),
+  role: z.enum(['viewer', 'creator']),
 })
 
 export const authSessionSchema = z.object({

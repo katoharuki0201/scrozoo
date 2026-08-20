@@ -54,3 +54,15 @@ export function XIcon(props: IconProps) {
 export function ChevronLeftIcon(props: IconProps) {
   return <svg {...defaults} {...props}><path d="m15 18-6-6 6-6" /></svg>
 }
+
+export function ChevronRightIcon(props: IconProps) {
+  return <svg {...defaults} {...props}><path d="m9 18 6-6-6-6" /></svg>
+}
+
+export function AccountCircleIcon(props: IconProps) {
+  return <svg {...defaults} {...props}><circle cx="12" cy="12" r="9" /><circle cx="12" cy="9" r="3" /><path d="M6.7 18a6 6 0 0 1 10.6 0" /></svg>
+}
+
+export function LockIcon(props: IconProps) {
+  return <svg {...defaults} {...props}><rect x="5" y="10" width="14" height="11" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>
+}

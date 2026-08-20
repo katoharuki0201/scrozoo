@@ -179,6 +179,35 @@ const mockVideos = [
   },
 ]
 
+const zooProfileDetails: Record<string, { bio: string; supporterCount: number; videoCount: number }> = {
+  tama: {
+    bio: '【多摩動物公園 公式】豊かな自然の中で個性あふれる動物たちと出会える場所。園内の最新情報や動物たちのほっこりする日常動画をお届けします！',
+    supporterCount: 38,
+    videoCount: 41,
+  },
+  higashiyama: {
+    bio: '【東山動植物園 公式】たくさんの動物たちと出会える緑豊かな動物園です。飼育員だからこそ見られる、動物たちの自然な表情を毎日お届けします！',
+    supporterCount: 24,
+    videoCount: 52,
+  },
+  ueno: {
+    bio: '【上野動物園 公式】動物たちの魅力と、いのちの大切さを伝える動物園。個性豊かな仲間たちの今を動画でお届けします。',
+    supporterCount: 52,
+    videoCount: 67,
+  },
+}
+
+function toProfileMedia(video: (typeof mockVideos)[number], suffix = '') {
+  return {
+    id: `${video.id}${suffix}`,
+    videoId: video.id,
+    videoUrl: video.videoUrl,
+    title: video.caption,
+    viewCount: video.viewCount,
+    thumbnailTime: video.thumbnailTime,
+  }
+}
+
 export const handlers = [
   http.get('*/api/health', async () => {
     await delay(300)
@@ -210,6 +239,7 @@ export const handlers = [
         email: result.data.email,
         avatarUrl: null,
         plan: 'free',
+        role: 'viewer',
       },
     })
   }),
@@ -224,6 +254,7 @@ export const handlers = [
         email: 'google.user@example.com',
         avatarUrl: null,
         plan: 'free',
+        role: 'viewer',
       },
     })
   }),
@@ -239,6 +270,7 @@ export const handlers = [
         email: 'mock.user@example.com',
         avatarUrl: null,
         plan: 'free',
+        role: 'viewer',
       })
     }
 
@@ -249,6 +281,7 @@ export const handlers = [
         email: 'google.user@example.com',
         avatarUrl: null,
         plan: 'free',
+        role: 'viewer',
       })
     }
 
@@ -258,6 +291,56 @@ export const handlers = [
     await delay(200)
 
     return new HttpResponse(null, { status: 204 })
+  }),
+  http.get('*/api/profiles/me', async ({ request }) => {
+    await delay(280)
+
+    const token = getToken(request)
+
+    if (token !== MOCK_EMAIL_TOKEN && token !== MOCK_GOOGLE_TOKEN) {
+      return HttpResponse.json({ message: 'Unauthorized' }, { status: 401 })
+    }
+
+    return HttpResponse.json({
+      id: token === MOCK_GOOGLE_TOKEN ? 'mock-google-user' : 'mock-email-user',
+      accountRole: 'viewer',
+      name: token === MOCK_GOOGLE_TOKEN ? 'Google User' : 'Mock User',
+      avatarUrl: null,
+      bio: '【動物動画の鑑賞垢】動物たちの可愛い姿や面白いハプニング動画を見て日々癒やされています。もふもふ系の動画に無言いいね多めです。素敵な投稿いつもありがとうございます！',
+      videoCount: null,
+      supporterCount: null,
+      supportPrice: null,
+      media: mockVideos.slice(0, 6).map((video) => toProfileMedia(video, '-gallery')),
+      supporterMedia: [],
+    })
+  }),
+  http.get('*/api/zoos/:zooId/profile', async ({ params }) => {
+    await delay(300)
+
+    const zooId = String(params.zooId)
+    const videos = mockVideos.filter((video) => video.zoo.id === zooId)
+    const details = zooProfileDetails[zooId]
+
+    if (!details || videos.length === 0) {
+      return HttpResponse.json({ message: 'Not found' }, { status: 404 })
+    }
+
+    const zoo = videos[0].zoo
+
+    return HttpResponse.json({
+      id: zoo.id,
+      accountRole: 'creator',
+      name: zoo.name,
+      avatarUrl: zoo.avatarUrl,
+      bio: details.bio,
+      videoCount: details.videoCount,
+      supporterCount: details.supporterCount,
+      supportPrice: videos[0].supportPrice,
+      media: videos.map((video) => toProfileMedia(video)),
+      supporterMedia: videos
+        .toReversed()
+        .map((video) => toProfileMedia(video, '-supporter')),
+    })
   }),
   http.get('*/api/feed', async () => {
     await delay(350)

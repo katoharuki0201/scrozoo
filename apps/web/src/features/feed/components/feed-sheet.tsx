@@ -11,6 +11,7 @@ export function FeedSheet({ children, onClose, title }: FeedSheetProps) {
   return (
     <div className="absolute inset-0 z-50 flex items-end bg-black/45" role="presentation" onClick={onClose}>
       <section
+        aria-label={title}
         aria-modal="true"
         className="max-h-[88dvh] w-full overflow-y-auto rounded-t-3xl bg-white px-5 pt-3 text-slate-950 shadow-2xl"
         onClick={(event) => event.stopPropagation()}
