@@ -10,7 +10,8 @@ export const apiClient = ky.create({
   hooks: {
     beforeRequest: [
       ({ request }) => {
-        const token = localStorage.getItem('token')
+        const isAdminRequest = new URL(request.url).pathname.includes('/api/admin/')
+        const token = localStorage.getItem(isAdminRequest ? 'admin-token' : 'token')
 
         if (token) {
           request.headers.set('Authorization', `Bearer ${token}`)

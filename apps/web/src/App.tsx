@@ -19,10 +19,33 @@ import { SupportGoalManagementPage } from './pages/support-goal-management-page'
 import { CreatorPostCreationPage } from './pages/creator-post-creation-page'
 import { CreatorSupportersPage } from './pages/creator-supporters-page'
 import { CreatorVideoPage } from './pages/creator-video-page'
+import { AdminGuestRoute } from './features/admin/components/admin-guest-route'
+import { AdminProtectedRoute } from './features/admin/components/admin-protected-route'
+import { AdminLayout } from './features/admin/components/admin-layout'
+import { AdminLoginPage } from './pages/admin-login-page'
+import { AdminDashboardPage } from './pages/admin-dashboard-page'
+import { AdminUsersPage } from './pages/admin-users-page'
+import { AdminSubscribersPage } from './pages/admin-subscribers-page'
+import { AdminRevenuePage } from './pages/admin-revenue-page'
+import { AdminCreatorsPage } from './pages/admin-creators-page'
 
 function App() {
   return (
     <Routes>
+      <Route element={<AdminGuestRoute />}>
+        <Route path="/admin/login" element={<AdminLoginPage />} />
+      </Route>
+
+      <Route element={<AdminProtectedRoute />}>
+        <Route element={<AdminLayout />}>
+          <Route path="/admin" element={<AdminDashboardPage />} />
+          <Route path="/admin/users" element={<AdminUsersPage />} />
+          <Route path="/admin/subscribers" element={<AdminSubscribersPage />} />
+          <Route path="/admin/revenue" element={<AdminRevenuePage />} />
+          <Route path="/admin/creators" element={<AdminCreatorsPage />} />
+        </Route>
+      </Route>
+
       <Route element={<GuestOnlyRoute />}>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegistrationPage />} />

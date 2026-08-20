@@ -4,6 +4,7 @@ import { z } from 'zod'
 const MOCK_EMAIL_TOKEN = 'mock-email-session-token'
 const MOCK_GOOGLE_TOKEN = 'mock-google-session-token'
 const MOCK_CREATOR_TOKEN = 'mock-creator-session-token'
+const MOCK_ADMIN_TOKEN = 'mock-admin-session-token'
 
 let likedVideoIds = new Set<string>([
   'kangaroo-snow',
@@ -154,6 +155,22 @@ const loginRequestSchema = z.object({
   password: z.string().min(8),
 })
 
+const adminLoginRequestSchema = z.object({
+  email: z.email(),
+  password: z.string().min(8),
+})
+
+const createAdminCreatorRequestSchema = z.object({
+  zooName: z.string().trim().min(1).max(50),
+  managerName: z.string().trim().min(1).max(30),
+  email: z.email(),
+  password: z.string().min(8),
+})
+
+const updateAdminCreatorStatusSchema = z.object({
+  status: z.enum(['active', 'suspended']),
+})
+
 const registrationRequestSchema = z.object({
   name: z.string().trim().min(1).max(30),
   email: z.email(),
@@ -205,8 +222,85 @@ const registeredEmails = new Set([
   'creator@scrozoo.jp',
 ])
 
+type MockAdminCreator = {
+  id: string
+  zooName: string
+  managerName: string
+  email: string
+  password: string
+  token: string
+  issuedAt: string
+  status: 'active' | 'suspended'
+  supporterCount: number
+}
+
+const mockAdminCreators: MockAdminCreator[] = [
+  { id: 'creator-tama', zooName: '多摩動物公園', managerName: '佐藤 美咲', email: 'creator@scrozoo.jp', password: 'password123', token: MOCK_CREATOR_TOKEN, issuedAt: '2026-04-12', status: 'active', supporterCount: 38 },
+  { id: 'creator-higashiyama', zooName: '東山動植物園', managerName: '鈴木 拓海', email: 'higashiyama@scrozoo.jp', password: 'password123', token: 'mock-creator-higashiyama-token', issuedAt: '2026-05-21', status: 'active', supporterCount: 24 },
+  { id: 'creator-ueno', zooName: '上野動物園', managerName: '高橋 葵', email: 'ueno@scrozoo.jp', password: 'password123', token: 'mock-creator-ueno-token', issuedAt: '2026-06-08', status: 'active', supporterCount: 52 },
+]
+
+for (const creator of mockAdminCreators) {
+  registeredEmails.add(creator.email)
+  if (!accountByToken.has(creator.token)) {
+    accountByToken.set(creator.token, { name: creator.zooName, email: creator.email, bio: `${creator.zooName}の公式アカウントです。`, role: 'creator' })
+  }
+}
+
+const adminRevenueMonths = [
+  [2025, 9, 742000, 164000], [2025, 10, 781500, 178500], [2025, 11, 824000, 191000], [2025, 12, 905500, 248500],
+  [2026, 1, 938000, 227000], [2026, 2, 976500, 256500], [2026, 3, 1031000, 279000], [2026, 4, 1088500, 301500],
+  [2026, 5, 1142000, 328000], [2026, 6, 1197500, 352500], [2026, 7, 1264000, 386000], [2026, 8, 1346500, 418500],
+].map(([year, month, subscription, tips]) => {
+  const gross = subscription + tips
+  const platformFee = Math.round(gross * 0.1)
+  return { month: `${year}-${String(month).padStart(2, '0')}`, subscription, tips, gross, platformFee, creatorPayout: gross - platformFee }
+})
+
+const adminViewerNames = ['田中 ひなた', '佐々木 凛', '伊藤 颯太', '渡辺 結衣', '山本 悠真', '小林 美月', '加藤 蓮', '吉田 彩花', '山田 陽斗', '松本 咲良', '井上 湊', '木村 結菜', '林 大翔', '清水 心春']
+const mockAdminViewers = adminViewerNames.map((name, index) => ({
+  id: `admin-viewer-${index + 1}`,
+  name,
+  email: `user${index + 1}@example.com`,
+  role: 'viewer' as const,
+  planStatus: index % 4 === 0 ? 'free' as const : index % 7 === 0 ? 'cancel_scheduled' as const : 'active' as const,
+  status: index === 11 ? 'suspended' as const : 'active' as const,
+  registeredAt: `2026-${String(8 - Math.floor(index / 4)).padStart(2, '0')}-${String(20 - (index % 4) * 3).padStart(2, '0')}`,
+}))
+
+const mockAdminSubscribers = Array.from({ length: 24 }, (_, index) => ({
+  id: `admin-subscriber-${index + 1}`,
+  userName: adminViewerNames[index % adminViewerNames.length],
+  email: `user${(index % adminViewerNames.length) + 1}@example.com`,
+  creatorName: ['多摩動物公園', '東山動植物園', '上野動物園'][index % 3],
+  joinedAt: `2026-${String(Math.max(1, 8 - (index % 7))).padStart(2, '0')}-${String((index % 20) + 1).padStart(2, '0')}`,
+  nextRenewalDate: `2026-09-${String((index % 24) + 1).padStart(2, '0')}`,
+  status: index % 9 === 0 ? 'cancel_scheduled' as const : 'active' as const,
+  supportedMonths: (index % 11) + 1,
+}))
+
 function getToken(request: Request) {
   return request.headers.get('Authorization')?.replace(/^Bearer\s+/i, '')
+}
+
+function requireAdmin(request: Request) {
+  return getToken(request) === MOCK_ADMIN_TOKEN
+}
+
+function publicAdminCreator(creator: MockAdminCreator) {
+  const { password: _password, token: _token, ...publicCreator } = creator
+  return publicCreator
+}
+
+function currentTokyoDate() {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Tokyo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date())
+  const value = (type: 'year' | 'month' | 'day') => parts.find((part) => part.type === type)?.value ?? ''
+  return `${value('year')}-${value('month')}-${value('day')}`
 }
 
 const mockVideos = [
@@ -401,6 +495,85 @@ export const handlers = [
       mode: 'mock',
     })
   }),
+  http.post('*/api/admin/auth/login', async ({ request }) => {
+    await delay(500)
+    const result = adminLoginRequestSchema.safeParse(await request.json())
+    if (!result.success || result.data.email.toLowerCase() !== 'admin@scrozoo.jp' || result.data.password !== 'admin1234') {
+      return HttpResponse.json({ message: 'Unauthorized' }, { status: 401 })
+    }
+    return HttpResponse.json({ token: MOCK_ADMIN_TOKEN, admin: { id: 'admin-1', name: 'SCROZOO管理者', email: 'admin@scrozoo.jp' } })
+  }),
+  http.get('*/api/admin/auth/session', async ({ request }) => {
+    await delay(200)
+    if (!requireAdmin(request)) return HttpResponse.json({ message: 'Unauthorized' }, { status: 401 })
+    return HttpResponse.json({ id: 'admin-1', name: 'SCROZOO管理者', email: 'admin@scrozoo.jp' })
+  }),
+  http.post('*/api/admin/auth/logout', async () => {
+    await delay(150)
+    return new HttpResponse(null, { status: 204 })
+  }),
+  http.get('*/api/admin/dashboard', async ({ request }) => {
+    await delay(350)
+    if (!requireAdmin(request)) return HttpResponse.json({ message: 'Unauthorized' }, { status: 401 })
+    const latest = adminRevenueMonths.at(-1)!
+    return HttpResponse.json({
+      metrics: { totalUsers: 2846, creators: mockAdminCreators.filter((creator) => creator.status === 'active').length, activeSubscribers: 2693, monthlyGross: latest.gross, monthlyFee: latest.platformFee, userGrowthRate: 8.4, revenueGrowthRate: 7.2 },
+      monthlyRevenue: adminRevenueMonths.slice(-8),
+      recentActivities: [
+        { id: 'activity-1', title: '新しいプラン加入', detail: '田中 ひなたさんが多摩動物公園に加入', occurredAt: '12分前', type: 'support' },
+        { id: 'activity-2', title: 'ユーザー登録', detail: '新しい一般ユーザーが登録されました', occurredAt: '28分前', type: 'user' },
+        { id: 'activity-3', title: 'Creatorアカウント発行', detail: '上野動物園のアカウントを発行', occurredAt: '2時間前', type: 'creator' },
+        { id: 'activity-4', title: '投げ銭', detail: '東山動植物園へ500円の支援', occurredAt: '3時間前', type: 'support' },
+      ],
+    })
+  }),
+  http.get('*/api/admin/users', async ({ request }) => {
+    await delay(300)
+    if (!requireAdmin(request)) return HttpResponse.json({ message: 'Unauthorized' }, { status: 401 })
+    const creators = mockAdminCreators.map((creator) => ({ id: creator.id, name: creator.zooName, email: creator.email, role: 'creator' as const, planStatus: 'not_applicable' as const, status: creator.status, registeredAt: creator.issuedAt }))
+    return HttpResponse.json({ users: [...mockAdminViewers, ...creators] })
+  }),
+  http.get('*/api/admin/subscribers', async ({ request }) => {
+    await delay(300)
+    if (!requireAdmin(request)) return HttpResponse.json({ message: 'Unauthorized' }, { status: 401 })
+    return HttpResponse.json({ subscribers: mockAdminSubscribers })
+  }),
+  http.get('*/api/admin/revenue', async ({ request }) => {
+    await delay(350)
+    if (!requireAdmin(request)) return HttpResponse.json({ message: 'Unauthorized' }, { status: 401 })
+    return HttpResponse.json({ feeRate: 10, months: adminRevenueMonths })
+  }),
+  http.get('*/api/admin/creators', async ({ request }) => {
+    await delay(300)
+    if (!requireAdmin(request)) return HttpResponse.json({ message: 'Unauthorized' }, { status: 401 })
+    return HttpResponse.json({ creators: mockAdminCreators.map(publicAdminCreator) })
+  }),
+  http.post('*/api/admin/creators', async ({ request }) => {
+    await delay(500)
+    if (!requireAdmin(request)) return HttpResponse.json({ message: 'Unauthorized' }, { status: 401 })
+    const result = createAdminCreatorRequestSchema.safeParse(await request.json())
+    if (!result.success || registeredEmails.has(result.data.email.toLowerCase())) return HttpResponse.json({ message: 'Invalid request' }, { status: 409 })
+    const email = result.data.email.toLowerCase()
+    const creator: MockAdminCreator = { id: `creator-${crypto.randomUUID()}`, zooName: result.data.zooName, managerName: result.data.managerName, email, password: result.data.password, token: `mock-creator-${crypto.randomUUID()}-token`, issuedAt: currentTokyoDate(), status: 'active', supporterCount: 0 }
+    mockAdminCreators.unshift(creator)
+    registeredEmails.add(email)
+    accountByToken.set(creator.token, { name: creator.zooName, email, bio: `${creator.zooName}の公式アカウントです。`, role: 'creator' })
+    return HttpResponse.json({ creator: publicAdminCreator(creator), temporaryPassword: result.data.password }, { status: 201 })
+  }),
+  http.patch('*/api/admin/creators/:creatorId/status', async ({ params, request }) => {
+    await delay(350)
+    if (!requireAdmin(request)) return HttpResponse.json({ message: 'Unauthorized' }, { status: 401 })
+    const result = updateAdminCreatorStatusSchema.safeParse(await request.json())
+    const creator = mockAdminCreators.find((item) => item.id === params.creatorId)
+    if (!result.success || !creator) return HttpResponse.json({ message: 'Not found' }, { status: 404 })
+    creator.status = result.data.status
+    if (creator.status === 'suspended') {
+      accountByToken.delete(creator.token)
+    } else {
+      accountByToken.set(creator.token, { name: creator.zooName, email: creator.email, bio: `${creator.zooName}の公式アカウントです。`, role: 'creator' })
+    }
+    return HttpResponse.json(publicAdminCreator(creator))
+  }),
   http.post('*/api/auth/register', async ({ request }) => {
     await delay(700)
 
@@ -477,23 +650,33 @@ export const handlers = [
       )
     }
 
-    const creatorLogin = result.data.email.toLowerCase() === 'creator@scrozoo.jp'
-    const name = creatorLogin ? '多摩動物公園' : result.data.email.split('@')[0]
+    const email = result.data.email.toLowerCase()
+    const creatorAccount = mockAdminCreators.find((creator) => creator.email === email)
+
+    if (creatorAccount && (creatorAccount.password !== result.data.password || creatorAccount.status !== 'active')) {
+      return HttpResponse.json(
+        { message: 'メールアドレスまたはパスワードが正しくありません。' },
+        { status: 401 },
+      )
+    }
+
+    const creatorLogin = Boolean(creatorAccount)
+    const name = creatorAccount?.zooName ?? result.data.email.split('@')[0]
     const role = creatorLogin ? 'creator' as const : 'viewer' as const
-    const token = creatorLogin ? MOCK_CREATOR_TOKEN : MOCK_EMAIL_TOKEN
+    const token = creatorAccount?.token ?? MOCK_EMAIL_TOKEN
     accountByToken.set(token, {
       name,
-      email: result.data.email,
-      bio: creatorLogin ? creatorBio : accountByToken.get(MOCK_EMAIL_TOKEN)?.bio ?? defaultBio,
+      email,
+      bio: creatorLogin ? accountByToken.get(token)?.bio ?? `${name}の公式アカウントです。` : accountByToken.get(MOCK_EMAIL_TOKEN)?.bio ?? defaultBio,
       role,
     })
 
     return HttpResponse.json({
       token,
       user: {
-        id: creatorLogin ? 'mock-creator-user' : 'mock-email-user',
+        id: creatorAccount?.id ?? 'mock-email-user',
         name,
-        email: result.data.email,
+        email,
         avatarUrl: null,
         plan: 'free',
         role,
@@ -522,12 +705,9 @@ export const handlers = [
     const account = accountByToken.get(token ?? '')
 
     if (account) {
+      const creatorAccount = mockAdminCreators.find((creator) => creator.token === token)
       return HttpResponse.json({
-        id: token === MOCK_CREATOR_TOKEN
-          ? 'mock-creator-user'
-          : token === MOCK_GOOGLE_TOKEN
-            ? 'mock-google-user'
-            : 'mock-email-user',
+        id: creatorAccount?.id ?? (token === MOCK_GOOGLE_TOKEN ? 'mock-google-user' : 'mock-email-user'),
         name: account.name,
         email: account.email,
         avatarUrl: null,
