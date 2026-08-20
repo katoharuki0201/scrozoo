@@ -116,6 +116,12 @@ const loginRequestSchema = z.object({
   password: z.string().min(8),
 })
 
+const registrationRequestSchema = z.object({
+  name: z.string().trim().min(1).max(30),
+  email: z.email(),
+  password: z.string().min(8),
+})
+
 const accountInformationRequestSchema = z.object({
   name: z.string().trim().min(1).max(30),
   email: z.email(),
@@ -146,6 +152,12 @@ const defaultBio = '【動物動画の鑑賞垢】動物たちの可愛い姿や
 const accountByToken = new Map<string, { name: string; email: string; bio: string; role: 'viewer' | 'creator' }>([
   [MOCK_EMAIL_TOKEN, { name: 'Mock User', email: 'mock.user@example.com', bio: defaultBio, role: 'viewer' }],
   [MOCK_GOOGLE_TOKEN, { name: 'Google User', email: 'google.user@example.com', bio: defaultBio, role: 'viewer' }],
+])
+
+const registeredEmails = new Set([
+  'mock.user@example.com',
+  'google.user@example.com',
+  'creator@scrozoo.jp',
 ])
 
 function getToken(request: Request) {
@@ -343,6 +355,70 @@ export const handlers = [
       status: 'ok',
       mode: 'mock',
     })
+  }),
+  http.post('*/api/auth/register', async ({ request }) => {
+    await delay(700)
+
+    const result = registrationRequestSchema.safeParse(await request.json())
+
+    if (!result.success) {
+      return HttpResponse.json(
+        { message: '入力内容を確認してください。' },
+        { status: 400 },
+      )
+    }
+
+    const email = result.data.email.toLowerCase()
+
+    if (registeredEmails.has(email)) {
+      return HttpResponse.json(
+        { message: 'このメールアドレスはすでに登録されています。' },
+        { status: 409 },
+      )
+    }
+
+    registeredEmails.add(email)
+    accountByToken.set(MOCK_EMAIL_TOKEN, {
+      name: result.data.name,
+      email,
+      bio: '',
+      role: 'viewer',
+    })
+
+    return HttpResponse.json(
+      {
+        token: MOCK_EMAIL_TOKEN,
+        user: {
+          id: `viewer-${Date.now()}`,
+          name: result.data.name,
+          email,
+          avatarUrl: null,
+          plan: 'free',
+          role: 'viewer',
+        },
+      },
+      { status: 201 },
+    )
+  }),
+  http.post('*/api/auth/register/google', async () => {
+    await delay(600)
+
+    registeredEmails.add('google.user@example.com')
+
+    return HttpResponse.json(
+      {
+        token: MOCK_GOOGLE_TOKEN,
+        user: {
+          id: 'mock-google-user',
+          name: 'Google User',
+          email: 'google.user@example.com',
+          avatarUrl: null,
+          plan: 'free',
+          role: 'viewer',
+        },
+      },
+      { status: 201 },
+    )
   }),
   http.post('*/api/auth/login', async ({ request }) => {
     await delay(600)

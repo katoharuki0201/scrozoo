@@ -19,6 +19,17 @@ export const loginFormSchema = z.object({
   password: z.string().min(8, 'パスワードは8文字以上で入力してください。'),
 })
 
+export const registrationFormSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, '名前を入力してください。')
+    .max(30, '名前は30文字以内で入力してください。'),
+  email: z.email('有効なメールアドレスを入力してください。'),
+  password: z.string().min(8, 'パスワードは8文字以上で入力してください。'),
+})
+
 export type User = z.infer<typeof userSchema>
 export type AuthSession = z.infer<typeof authSessionSchema>
 export type LoginFormValues = z.infer<typeof loginFormSchema>
+export type RegistrationFormValues = z.infer<typeof registrationFormSchema>

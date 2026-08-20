@@ -3,6 +3,7 @@ import { GuestOnlyRoute } from './features/auth/components/guest-only-route'
 import { ProtectedRoute } from './features/auth/components/protected-route'
 import { HomePage } from './pages/home-page'
 import { LoginPage } from './pages/login-page'
+import { RegistrationPage } from './pages/registration-page'
 import { NotFoundPage } from './pages/not-found-page'
 import { SearchResultsPage } from './pages/search-results-page'
 import { MyProfilePage } from './pages/my-profile-page'
@@ -19,6 +20,7 @@ function App() {
     <Routes>
       <Route element={<GuestOnlyRoute />}>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegistrationPage />} />
       </Route>
 
       <Route element={<ProtectedRoute />}>

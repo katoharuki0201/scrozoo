@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { useLocation, useNavigate } from 'react-router'
+import { Link, useLocation, useNavigate } from 'react-router'
 import { loginWithEmail, loginWithGoogle } from '../features/auth/api/auth-api'
 import { useAuth } from '../features/auth/hooks/use-auth'
 import {
@@ -196,7 +196,15 @@ export function LoginPage() {
             </button>
           </form>
 
-          <p className="mt-8 text-center text-xs leading-5 text-slate-400">
+          <p className="mt-7 text-center text-sm text-slate-500">
+            アカウントをお持ちでない方は
+            {' '}
+            <Link className="font-bold text-sky-700 hover:text-sky-800" state={location.state} to="/register">
+              新規登録
+            </Link>
+          </p>
+
+          <p className="mt-5 text-center text-xs leading-5 text-slate-400">
             続行することで、利用規約とプライバシーポリシーに同意したものとみなされます。
           </p>
         </div>
