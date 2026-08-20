@@ -5,6 +5,7 @@ import {
   AccountCircleIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  ClipboardListIcon,
 } from '../../../shared/ui/icons'
 import type { GalleryPost, Profile, ProfileViewMode } from '../model/profile'
 import { GalleryPostDialog } from './gallery-post-dialog'
@@ -76,14 +77,24 @@ export function ProfileScreen({
           <p className="mt-7 whitespace-pre-line text-[15px] leading-7 text-slate-700">{profile.bio}</p>
 
           {viewMode === 'self' && (
-            <Link
-              className="mt-7 flex h-17 items-center rounded-2xl bg-slate-200 px-5 text-slate-800 active:bg-slate-300"
-              to="/mypage/account"
-            >
-              <AccountCircleIcon className="size-8" />
-              <span className="ml-3 flex-1 text-base font-bold">アカウント情報</span>
-              <ChevronRightIcon className="size-7" />
-            </Link>
+            <div className="mt-7 space-y-3">
+              <Link
+                className="flex h-17 items-center rounded-2xl bg-slate-200 px-5 text-slate-800 active:bg-slate-300"
+                to="/mypage/account"
+              >
+                <AccountCircleIcon className="size-8" />
+                <span className="ml-3 flex-1 text-base font-bold">アカウント情報</span>
+                <ChevronRightIcon className="size-7" />
+              </Link>
+              <Link
+                className="flex h-17 items-center rounded-2xl bg-slate-200 px-5 text-slate-800 active:bg-slate-300"
+                to="/mypage/plans"
+              >
+                <ClipboardListIcon className="size-8" />
+                <span className="ml-3 flex-1 text-base font-bold">加入中のプラン</span>
+                <ChevronRightIcon className="size-7" />
+              </Link>
+            </div>
           )}
         </section>
 

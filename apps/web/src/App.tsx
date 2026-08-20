@@ -11,6 +11,7 @@ import { AccountInformationPage } from './pages/account-information-page'
 import { FavoritesPage } from './pages/favorites-page'
 import { QrScanPage } from './pages/qr-scan-page'
 import { GalleryCapturePage } from './pages/gallery-capture-page'
+import { SupportPlansPage } from './pages/support-plans-page'
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
         <Route path="/favorites" element={<FavoritesPage />} />
         <Route path="/mypage" element={<MyProfilePage />} />
         <Route path="/mypage/account" element={<AccountInformationPage />} />
+        <Route path="/mypage/plans" element={<SupportPlansPage />} />
         <Route path="/search" element={<SearchResultsPage />} />
         <Route path="/zoos/:zooId" element={<ZooProfilePage />} />
         <Route path="*" element={<NotFoundPage />} />

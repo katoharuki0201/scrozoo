@@ -13,6 +13,18 @@ let likedVideoIds = new Set<string>([
 ])
 
 const supportedZooIds = new Set(['higashiyama'])
+let mockSupportPlans = [
+  {
+    id: 'support-plan-higashiyama',
+    zoo: {
+      id: 'higashiyama',
+      name: '東山動植物園',
+      avatarUrl: '/icon.jpg',
+    },
+    nextRenewalDate: '2026-09-20',
+    status: 'active' as 'active' | 'cancel_scheduled',
+  },
+]
 
 const commentRequestSchema = z.object({
   message: z.string().trim().min(1).max(200),
@@ -124,7 +136,7 @@ const mockVideos = [
     tags: ['キリン', '上野動物園', '動物の日常'],
     likeCount: 196,
     commentCount: 22,
-    supportPrice: 300,
+    supportPrice: 500,
     viewCount: 4680,
     thumbnailTime: 2,
     publishedAt: '2026-08-14T08:15:00.000Z',
@@ -163,7 +175,7 @@ const mockVideos = [
     tags: ['キリン', '夏', '上野動物園'],
     likeCount: 153,
     commentCount: 19,
-    supportPrice: 300,
+    supportPrice: 500,
     viewCount: 3921,
     thumbnailTime: 4,
     publishedAt: '2026-08-08T15:40:00.000Z',
@@ -202,7 +214,7 @@ const mockVideos = [
     tags: ['キリン', '仲間', '上野動物園'],
     likeCount: 177,
     commentCount: 27,
-    supportPrice: 300,
+    supportPrice: 500,
     viewCount: 5132,
     thumbnailTime: 1,
     publishedAt: '2026-08-02T09:50:00.000Z',
@@ -482,6 +494,40 @@ export const handlers = [
     accountByToken.set(token, result.data)
 
     return HttpResponse.json(result.data)
+  }),
+  http.get('*/api/profiles/me/support-plans', async ({ request }) => {
+    await delay(280)
+
+    const token = getToken(request)
+
+    if (token !== MOCK_EMAIL_TOKEN && token !== MOCK_GOOGLE_TOKEN) {
+      return HttpResponse.json({ message: 'Unauthorized' }, { status: 401 })
+    }
+
+    return HttpResponse.json(mockSupportPlans)
+  }),
+  http.post('*/api/support-plans/:planId/cancel', async ({ params, request }) => {
+    await delay(500)
+
+    const token = getToken(request)
+
+    if (token !== MOCK_EMAIL_TOKEN && token !== MOCK_GOOGLE_TOKEN) {
+      return HttpResponse.json({ message: 'Unauthorized' }, { status: 401 })
+    }
+
+    const planId = String(params.planId)
+    const plan = mockSupportPlans.find((item) => item.id === planId)
+
+    if (!plan) {
+      return HttpResponse.json({ message: 'Not found' }, { status: 404 })
+    }
+
+    const cancelledPlan = { ...plan, status: 'cancel_scheduled' as const }
+    mockSupportPlans = mockSupportPlans.map((item) =>
+      item.id === planId ? cancelledPlan : item,
+    )
+
+    return HttpResponse.json(cancelledPlan)
   }),
   http.get('*/api/profiles/me', async ({ request }) => {
     await delay(280)

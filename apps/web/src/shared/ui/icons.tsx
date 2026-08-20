@@ -78,3 +78,11 @@ export function SuperChatIcon(props: IconProps) {
 export function CheckIcon(props: IconProps) {
   return <svg {...defaults} {...props}><path d="m5 12 4 4L19 6" /></svg>
 }
+
+export function CalendarIcon(props: IconProps) {
+  return <svg {...defaults} {...props}><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M16 3v4M8 3v4M3 10h18" /></svg>
+}
+
+export function ClipboardListIcon(props: IconProps) {
+  return <svg {...defaults} {...props}><rect x="5" y="4" width="14" height="17" rx="2" /><path d="M9 4V3h6v1M9 9h6M9 13h6M9 17h4" /></svg>
+}
