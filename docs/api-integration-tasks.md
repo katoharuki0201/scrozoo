@@ -108,28 +108,28 @@ MSW で実装されているフロントエンド向け API を、Hono、Better 
 
 ## P1: 投稿者 API
 
-- [ ] `GET /api/publisher/zoo`
-- [ ] `PATCH /api/publisher/zoo`
-- [ ] `GET /api/publisher/animals`
-- [ ] `POST /api/publisher/animals`
-- [ ] `PATCH /api/publisher/animals/:animalId`
-- [ ] `GET /api/publisher/videos`
+- [x] `GET /api/publisher/zoo`
+- [x] `PATCH /api/publisher/zoo`
+- [x] `GET /api/publisher/animals`
+- [x] `POST /api/publisher/animals`
+- [x] `PATCH /api/publisher/animals/:animalId`
+- [x] `GET /api/publisher/videos`
 - [x] `POST /api/creator/posts`（既存フロント契約を維持）
   - `ready` の動画とプレビューメディアのみ指定可
   - セッションの動物園以外のメディアは指定不可
-- [ ] `PATCH /api/publisher/videos/:videoId`
-- [ ] `DELETE /api/publisher/videos/:videoId`
-- [ ] `GET /api/creator/supporters` または `GET /api/publisher/supporters`
-- [ ] `GET /api/publisher/visit-qr`
+- [x] `PATCH /api/publisher/videos/:videoId`
+- [x] `DELETE /api/publisher/videos/:videoId`
+- [x] `GET /api/creator/supporters`（既存フロント契約）
+- [x] `GET /api/publisher/visit-qr`
 - [x] 現行フロントの `POST /api/creator/posts` を新しいアップロードフローへ置き換える。
 
 ## P1: QR 認証とギャラリー
 
-- [ ] QR トークンの署名・検証方式と有効期限を決定する。
-- [ ] DB に保存するのは QR トークン本文ではなくハッシュにする。
-- [ ] `POST /api/qr/verify`
-- [ ] `GET /api/qr/sessions/:sessionId`
-- [ ] `POST /api/gallery/posts`
+- [x] QR トークンは暗号学的乱数で生成し、発行QRは24時間、検証後の投稿権限は2時間有効とする。
+- [x] DB に保存するのは QR トークン本文ではなく SHA-256 ハッシュにする。
+- [x] `POST /api/qr/verify`
+- [x] `GET /api/qr/sessions/:sessionId`
+- [x] `POST /api/gallery/posts`
   - `ready` の `galleryImage` メディアのみ指定可
   - セッションのユーザーが所有する画像のみ指定可
   - 有効期間内の `visit_permit` を必須にする
