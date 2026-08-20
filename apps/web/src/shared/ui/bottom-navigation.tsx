@@ -8,7 +8,7 @@ const items = [
   { to: '/mypage', label: 'マイページ', icon: UserIcon },
 ]
 
-export function BottomNavigation() {
+export function BottomNavigation({ activePath }: { activePath?: string }) {
   return (
     <nav
       aria-label="メインナビゲーション"
@@ -20,7 +20,9 @@ export function BottomNavigation() {
           <NavLink
             className={({ isActive }) =>
               `flex min-w-0 flex-col items-center gap-1 rounded-xl px-1 py-1 text-[10px] font-semibold transition ${
-                isActive ? 'text-orange-500' : 'text-slate-500 active:bg-slate-100'
+                isActive || activePath === to
+                  ? 'text-orange-500'
+                  : 'text-slate-500 active:bg-slate-100'
               }`
             }
             end={to === '/'}

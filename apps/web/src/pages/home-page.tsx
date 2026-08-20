@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
 import { feedQueryOptions, toggleVideoLike } from '../features/feed/api/feed-api'
 import { FeedSheet } from '../features/feed/components/feed-sheet'
 import { CommentsSheet } from '../features/feed/components/comments-sheet'
@@ -12,6 +12,7 @@ import { SearchIcon } from '../shared/ui/icons'
 
 export function HomePage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const queryClient = useQueryClient()
   const { user } = useAuth()
   const feedQuery = useQuery(feedQueryOptions)
@@ -19,6 +20,17 @@ export function HomePage() {
   const [activeIndex, setActiveIndex] = useState(0)
   const [search, setSearch] = useState('')
   const [sheet, setSheet] = useState<'comments' | 'support' | null>(null)
+
+  useEffect(() => {
+    const videoId = searchParams.get('video')
+    const index = feedQuery.data?.findIndex((video) => video.id === videoId) ?? -1
+    const root = scrollerRef.current
+
+    if (!root || index < 0) return
+
+    root.scrollTo({ top: root.clientHeight * index })
+    setActiveIndex(index)
+  }, [feedQuery.data, searchParams])
 
   useEffect(() => {
     const root = scrollerRef.current

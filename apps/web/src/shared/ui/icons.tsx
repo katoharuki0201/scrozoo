@@ -50,3 +50,7 @@ export function RotateIcon(props: IconProps) {
 export function XIcon(props: IconProps) {
   return <svg {...defaults} {...props}><path d="m6 6 12 12M18 6 6 18" /></svg>
 }
+
+export function ChevronLeftIcon(props: IconProps) {
+  return <svg {...defaults} {...props}><path d="m15 18-6-6 6-6" /></svg>
+}

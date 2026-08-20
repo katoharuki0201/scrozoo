@@ -59,6 +59,126 @@ function getToken(request: Request) {
   return request.headers.get('Authorization')?.replace(/^Bearer\s+/i, '')
 }
 
+const mockVideos = [
+  {
+    id: 'kangaroo-snow',
+    videoUrl: '/videos/14634386_1080_1920_30fps.mp4',
+    zoo: { id: 'tama', name: '多摩動物公園', avatarUrl: '/icon.jpg' },
+    caption: '雪の日も元気いっぱい。親子で過ごすカンガルーたちの朝',
+    tags: ['カンガルー', '雪の動物園', '多摩動物公園'],
+    likeCount: 102,
+    commentCount: 31,
+    supportPrice: 500,
+    viewCount: 1246,
+    thumbnailTime: 0.5,
+    publishedAt: '2026-08-18T09:00:00.000Z',
+  },
+  {
+    id: 'tiger-walk',
+    videoUrl: '/videos/14807282_2160_3840_30fps.mp4',
+    zoo: { id: 'higashiyama', name: '東山動植物園', avatarUrl: '/icon.jpg' },
+    caption: 'ゆっくりと園内をお散歩中。迫力たっぷりなトラの横顔に注目',
+    tags: ['トラ', '東山動植物園', '動物の日常'],
+    likeCount: 284,
+    commentCount: 48,
+    supportPrice: 500,
+    viewCount: 8214,
+    thumbnailTime: 1.2,
+    publishedAt: '2026-08-16T11:30:00.000Z',
+  },
+  {
+    id: 'giraffe-herd',
+    videoUrl: '/videos/15039194_2160_3840_30fps.mp4',
+    zoo: { id: 'ueno', name: '上野動物園', avatarUrl: '/icon.jpg' },
+    caption: 'みんなで並んでお散歩。青空の下で過ごすキリンたちの日常',
+    tags: ['キリン', '上野動物園', '動物の日常'],
+    likeCount: 196,
+    commentCount: 22,
+    supportPrice: 300,
+    viewCount: 4680,
+    thumbnailTime: 2,
+    publishedAt: '2026-08-14T08:15:00.000Z',
+  },
+  {
+    id: 'kangaroo-family',
+    videoUrl: '/videos/14634386_1080_1920_30fps.mp4',
+    zoo: { id: 'tama', name: '多摩動物公園', avatarUrl: '/icon.jpg' },
+    caption: 'カンガルー家族ののんびりした午後',
+    tags: ['カンガルー', '親子', '多摩動物公園'],
+    likeCount: 88,
+    commentCount: 14,
+    supportPrice: 500,
+    viewCount: 980,
+    thumbnailTime: 2.4,
+    publishedAt: '2026-08-12T13:00:00.000Z',
+  },
+  {
+    id: 'tiger-closeup',
+    videoUrl: '/videos/14807282_2160_3840_30fps.mp4',
+    zoo: { id: 'higashiyama', name: '東山動植物園', avatarUrl: '/icon.jpg' },
+    caption: 'すぐそばまでやってきたトラの迫力ある表情',
+    tags: ['トラ', '肉食動物', '東山動植物園'],
+    likeCount: 341,
+    commentCount: 56,
+    supportPrice: 500,
+    viewCount: 12560,
+    thumbnailTime: 3.1,
+    publishedAt: '2026-08-10T10:20:00.000Z',
+  },
+  {
+    id: 'giraffe-sky',
+    videoUrl: '/videos/15039194_2160_3840_30fps.mp4',
+    zoo: { id: 'ueno', name: '上野動物園', avatarUrl: '/icon.jpg' },
+    caption: '真夏の青空とキリンのシルエット',
+    tags: ['キリン', '夏', '上野動物園'],
+    likeCount: 153,
+    commentCount: 19,
+    supportPrice: 300,
+    viewCount: 3921,
+    thumbnailTime: 4,
+    publishedAt: '2026-08-08T15:40:00.000Z',
+  },
+  {
+    id: 'kangaroo-morning',
+    videoUrl: '/videos/14634386_1080_1920_30fps.mp4',
+    zoo: { id: 'tama', name: '多摩動物公園', avatarUrl: '/icon.jpg' },
+    caption: '朝のカンガルー舎からおはよう',
+    tags: ['カンガルー', '朝', '多摩動物公園'],
+    likeCount: 67,
+    commentCount: 9,
+    supportPrice: 500,
+    viewCount: 746,
+    thumbnailTime: 3.6,
+    publishedAt: '2026-08-06T07:10:00.000Z',
+  },
+  {
+    id: 'tiger-patrol',
+    videoUrl: '/videos/14807282_2160_3840_30fps.mp4',
+    zoo: { id: 'higashiyama', name: '東山動植物園', avatarUrl: '/icon.jpg' },
+    caption: 'いつものコースをパトロールするトラ',
+    tags: ['トラ', 'お散歩', '東山動植物園'],
+    likeCount: 229,
+    commentCount: 35,
+    supportPrice: 500,
+    viewCount: 6775,
+    thumbnailTime: 4.3,
+    publishedAt: '2026-08-04T12:00:00.000Z',
+  },
+  {
+    id: 'giraffe-together',
+    videoUrl: '/videos/15039194_2160_3840_30fps.mp4',
+    zoo: { id: 'ueno', name: '上野動物園', avatarUrl: '/icon.jpg' },
+    caption: 'なかよく並んで歩くキリンたち',
+    tags: ['キリン', '仲間', '上野動物園'],
+    likeCount: 177,
+    commentCount: 27,
+    supportPrice: 300,
+    viewCount: 5132,
+    thumbnailTime: 1,
+    publishedAt: '2026-08-02T09:50:00.000Z',
+  },
+]
+
 export const handlers = [
   http.get('*/api/health', async () => {
     await delay(300)
@@ -142,44 +262,44 @@ export const handlers = [
   http.get('*/api/feed', async () => {
     await delay(350)
 
-    const videos = [
-      {
-        id: 'kangaroo-snow',
-        videoUrl: '/videos/14634386_1080_1920_30fps.mp4',
-        zoo: { id: 'tama', name: '多摩動物公園', avatarUrl: '/icon.jpg' },
-        caption: '雪の日も元気いっぱい。親子で過ごすカンガルーたちの朝',
-        tags: ['カンガルー', '雪の動物園', '多摩動物公園'],
-        likeCount: 102,
-        commentCount: 31,
-        supportPrice: 500,
-      },
-      {
-        id: 'tiger-walk',
-        videoUrl: '/videos/14807282_2160_3840_30fps.mp4',
-        zoo: { id: 'higashiyama', name: '東山動植物園', avatarUrl: '/icon.jpg' },
-        caption: 'ゆっくりと園内をお散歩中。迫力たっぷりなトラの横顔に注目',
-        tags: ['トラ', '東山動植物園', '動物の日常'],
-        likeCount: 284,
-        commentCount: 48,
-        supportPrice: 500,
-      },
-      {
-        id: 'giraffe-herd',
-        videoUrl: '/videos/15039194_2160_3840_30fps.mp4',
-        zoo: { id: 'ueno', name: '上野動物園', avatarUrl: '/icon.jpg' },
-        caption: 'みんなで並んでお散歩。青空の下で過ごすキリンたちの日常',
-        tags: ['キリン', '上野動物園', '動物の日常'],
-        likeCount: 196,
-        commentCount: 22,
-        supportPrice: 300,
-      },
-    ]
-
     return HttpResponse.json(
-      videos.map((video) => ({
+      mockVideos.map((video) => ({
         ...video,
         isLiked: likedVideoIds.has(video.id),
         likeCount: video.likeCount + (likedVideoIds.has(video.id) ? 1 : 0),
+      })),
+    )
+  }),
+  http.get('*/api/search/videos', async ({ request }) => {
+    await delay(300)
+
+    const url = new URL(request.url)
+    const query = url.searchParams.get('q')?.trim().toLocaleLowerCase('ja-JP') ?? ''
+    const sort = url.searchParams.get('sort') ?? 'latest'
+    const matches = mockVideos.filter((video) => {
+      if (!query) return true
+
+      return [video.caption, video.zoo.name, ...video.tags]
+        .join(' ')
+        .toLocaleLowerCase('ja-JP')
+        .includes(query)
+    })
+
+    const sorted = matches.toSorted((first, second) => {
+      if (sort === 'popular') return second.viewCount - first.viewCount
+      if (sort === 'oldest') return first.publishedAt.localeCompare(second.publishedAt)
+
+      return second.publishedAt.localeCompare(first.publishedAt)
+    })
+
+    return HttpResponse.json(
+      sorted.map(({ id, videoUrl, caption, viewCount, thumbnailTime, publishedAt }) => ({
+        id,
+        videoUrl,
+        title: caption,
+        viewCount,
+        thumbnailTime,
+        publishedAt,
       })),
     )
   }),
