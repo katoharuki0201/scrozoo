@@ -7,6 +7,10 @@ import { db } from './db'
 import { sessionMiddleware, type AuthEnv } from './middleware/auth'
 import { profiles } from './routes/profiles'
 import { content } from './routes/content'
+import { uploads } from './routes/uploads'
+import { getApiEnv } from './config/env'
+
+getApiEnv()
 
 const app = new Hono<AuthEnv>()
 
@@ -35,6 +39,7 @@ app.get('/api/ready', async (c) => {
 app.use('/api/*', sessionMiddleware)
 app.route('/api', profiles)
 app.route('/api', content)
+app.route('/api', uploads)
 
 app.get('/', (c) => {
   return c.text('Scrozoo API')

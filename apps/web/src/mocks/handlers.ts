@@ -189,8 +189,10 @@ const qrVerificationRequestSchema = z.object({
 
 const galleryPostRequestSchema = z.object({
   sessionId: z.string(),
-  imageDataUrl: z.string().startsWith('data:image/'),
+  imageUploadId: z.string(),
 })
+
+const mockUploads = new Map<string, { contentType: string; uploaded: boolean }>()
 
 const supportGoalRequestSchema = z.object({
   title: z.string().trim().min(1).max(50),
@@ -490,6 +492,36 @@ const qrVisitSessions = new Map<
 >()
 
 export const handlers = [
+  http.post('*/api/uploads', async ({ request }) => {
+    const body = z.object({
+      purpose: z.string(),
+      contentType: z.string(),
+      size: z.number().positive(),
+      fileName: z.string().min(1),
+    }).safeParse(await request.json())
+    if (!body.success) return HttpResponse.json({ message: 'Invalid upload' }, { status: 422 })
+    const uploadId = crypto.randomUUID()
+    mockUploads.set(uploadId, { contentType: body.data.contentType, uploaded: false })
+    return HttpResponse.json({
+      uploadId,
+      uploadUrl: `${location.origin}/mock-uploads/${uploadId}`,
+      objectKey: `mock/${uploadId}`,
+      expiresAt: new Date(Date.now() + 600_000).toISOString(),
+      headers: { 'Content-Type': body.data.contentType },
+    }, { status: 201 })
+  }),
+  http.put('*/mock-uploads/:uploadId', async ({ params }) => {
+    const upload = mockUploads.get(String(params.uploadId))
+    if (!upload) return new HttpResponse(null, { status: 404 })
+    upload.uploaded = true
+    return new HttpResponse(null, { status: 200, headers: { ETag: '"mock-etag"' } })
+  }),
+  http.post('*/api/uploads/:uploadId/complete', async ({ params }) => {
+    const uploadId = String(params.uploadId)
+    const upload = mockUploads.get(uploadId)
+    if (!upload?.uploaded) return HttpResponse.json({ message: 'Upload incomplete' }, { status: 409 })
+    return HttpResponse.json({ uploadId, objectKey: `mock/${uploadId}`, status: 'ready' })
+  }),
   http.get('*/api/health', async () => {
     await delay(300)
 
@@ -799,7 +831,7 @@ export const handlers = [
 
     const post = {
       id: crypto.randomUUID(),
-      imageUrl: result.data.imageDataUrl,
+      imageUrl: '/gallery01.jpg',
       createdAt: new Date().toISOString(),
       author: {
         id: token === MOCK_GOOGLE_TOKEN ? 'mock-google-user' : 'mock-email-user',

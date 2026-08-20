@@ -37,39 +37,39 @@ MSW で実装されているフロントエンド向け API を、Hono、Better 
 
 ### 環境変数
 
-- [ ] `apps/api/.env.example` に以下を追加する。
+- [x] `apps/api/.env.example` に以下を追加する。
   - `R2_ACCOUNT_ID`
   - `R2_ACCESS_KEY_ID`
   - `R2_SECRET_ACCESS_KEY`
   - `R2_ENDPOINT`
   - `R2_PUBLIC_BUCKET_NAME=scrozoo-public`
   - `MEDIA_PUBLIC_BASE_URL`
-- [ ] API 起動時に必須環境変数を検証し、設定不足を明確なエラーにする。
-- [ ] R2 クライアントを単一モジュールとして作成する。
-- [ ] Access Key ID と Secret Access Key が Git 履歴とログに出力されないことを確認する。
+- [x] API 起動時に必須環境変数を検証し、設定不足を明確なエラーにする。
+- [x] R2 クライアントを単一モジュールとして作成する。
+- [x] Access Key ID と Secret Access Key が Git 履歴とログに出力されないことを確認する。
 
 ### 署名付きアップロード
 
-- [ ] `POST /api/uploads` を実装する。
+- [x] `POST /api/uploads` を実装する。
   - 認証必須
   - `purpose`、`contentType`、`size`、元ファイル名を検証
   - UUID などで予測困難な `objectKey` を生成
   - `media_asset` に `pending` で保存
   - 有効期限が短い `PutObject` 署名付き URL を返す
   - 署名に `Content-Type` を含める
-- [ ] 用途ごとの許可形式と容量上限を実装する。
+- [x] 用途ごとの許可形式と容量上限を実装する。
   - `avatar`: JPEG / PNG / WebP
   - `zooProfile`: JPEG / PNG / WebP
   - `animalProfile`: JPEG / PNG / WebP
   - `galleryImage`: JPEG / WebP
   - `videoPreview`: MP4
   - `video`: MP4
-- [ ] `POST /api/uploads/:uploadId/complete` を実装する。
+- [x] `POST /api/uploads/:uploadId/complete` を実装する。
   - R2 上にオブジェクトが存在することを `HEAD` 相当で確認
   - Content-Type とサイズが事前申告と一致することを確認
   - `media_asset.status` を `ready` に更新
-- [ ] `pending` のまま期限切れしたオブジェクトと DB レコードの削除方針を決める。
-- [ ] R2 の CORS で開発環境と本番 Web オリジンからの `PUT`、`GET`、`HEAD` だけを許可する。
+- [x] `pending` は24時間で期限切れとし、定期クリーンアップでR2オブジェクトとDBレコードを削除する。完了APIは期限切れを拒否する。
+- [x] R2 の CORS で開発環境と本番 Web オリジンからの `PUT`、`GET`、`HEAD` だけを許可する。
 
 ### 非公開メディアの判断
 

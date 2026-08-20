@@ -124,7 +124,7 @@ GET は `after`、`cursor`、`limit` を受け取る。メッセージは最大5
 | `POST` | `/api/uploads` | 必須 | R2 アップロード用の署名付き URL を発行 |
 | `POST` | `/api/uploads/:uploadId/complete` | 必須 | 完了を確認し、`objectKey` を有効化 |
 
-`POST /api/uploads` は `purpose`（`avatar`、`video`、`videoPreview`、`galleryImage`）、`contentType`、`size` を受け取る。ロール、形式、サイズ、R2 使用量を検査してから URL を発行する。
+`POST /api/uploads` は `purpose`（`avatar`、`zooProfile`、`animalProfile`、`video`、`videoPreview`、`galleryImage`）、`contentType`、`size`、`fileName` を受け取る。ロール、形式、サイズ、R2 使用量を検査してから URL を発行する。フロントエンドは返された `headers` を付けてR2へ直接PUTし、その後に完了APIを呼ぶ。
 
 ## 10. 投稿者向け API
 
