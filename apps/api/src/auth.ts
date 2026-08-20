@@ -9,6 +9,9 @@ const trustedOrigins = (process.env.TRUSTED_ORIGINS ?? "http://localhost:5173")
   .map((origin) => origin.trim())
   .filter(Boolean);
 
+const googleClientId = process.env.GOOGLE_CLIENT_ID;
+const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
+
 export const auth = betterAuth({
   appName: "Scrozoo",
   baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
@@ -22,6 +25,15 @@ export const auth = betterAuth({
     maxPasswordLength: 128,
     revokeSessionsOnPasswordReset: true,
   },
+  socialProviders:
+    googleClientId && googleClientSecret
+      ? {
+          google: {
+            clientId: googleClientId,
+            clientSecret: googleClientSecret,
+          },
+        }
+      : undefined,
   trustedOrigins,
   user: {
     additionalFields: {
@@ -35,5 +47,10 @@ export const auth = betterAuth({
   },
   advanced: {
     useSecureCookies: process.env.NODE_ENV === "production",
+  },
+  rateLimit: {
+    enabled: true,
+    window: 60,
+    max: 100,
   },
 });

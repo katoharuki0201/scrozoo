@@ -16,6 +16,7 @@ TechJam 2026 チームBの企画として開発しています。
 - [要件定義](./docs/requirements.md)
 - [画面とページ遷移](./docs/screens-and-flows.md)
 - [API 定義](./docs/api.md)
+- [API 統合タスク](./docs/api-integration-tasks.md)
 - [データベース設計](./docs/database-design.md)
 - [技術構成](./docs/architecture.md)
 - [決定事項](./docs/decisions.md)
@@ -34,7 +35,7 @@ TechJam 2026 チームBの企画として開発しています。
 
 ## 開発状況
 
-現在は要件定義とフレームワークの初期構築まで完了しています。
+ReactフロントエンドとHono APIを統合中です。認証、プロフィール、フィード、検索、お気に入り、通常コメントはHonoとTurso/SQLiteに接続済みです。
 
 ```text
 apps/web/  React + Vite

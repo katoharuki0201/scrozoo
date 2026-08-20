@@ -72,7 +72,7 @@ export function RegistrationPage() {
   })
   const isSubmitting = emailRegistration.isPending || googleRegistration.isPending
   const registrationError = emailRegistration.error ?? googleRegistration.error
-  const duplicateEmail = registrationError instanceof HTTPError && registrationError.response.status === 409
+  const duplicateEmail = registrationError instanceof HTTPError && [409, 422].includes(registrationError.response.status)
 
   return (
     <main className="grid min-h-svh bg-white lg:grid-cols-[minmax(0,1.05fr)_minmax(32rem,0.95fr)]">

@@ -5,13 +5,14 @@ const apiBaseUrl = `${(import.meta.env.VITE_API_BASE_URL ?? '/api').replace(/\/+
 
 export const apiClient = ky.create({
   baseUrl: apiBaseUrl,
+  credentials: 'include',
   retry: 0,
   timeout: 15_000,
   hooks: {
     beforeRequest: [
       ({ request }) => {
         const isAdminRequest = new URL(request.url).pathname.includes('/api/admin/')
-        const token = localStorage.getItem(isAdminRequest ? 'admin-token' : 'token')
+        const token = isAdminRequest ? localStorage.getItem('admin-token') : null
 
         if (token) {
           request.headers.set('Authorization', `Bearer ${token}`)

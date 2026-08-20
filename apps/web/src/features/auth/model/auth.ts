@@ -10,7 +10,6 @@ export const userSchema = z.object({
 })
 
 export const authSessionSchema = z.object({
-  token: z.string(),
   user: userSchema,
 })
 

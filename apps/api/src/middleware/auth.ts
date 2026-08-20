@@ -50,7 +50,7 @@ export const requirePublisher = createMiddleware<AuthEnv>(async (c, next) => {
     );
   }
 
-  if (session.user.role !== "publisher") {
+  if (session.user.role !== "publisher" && session.user.role !== "creator") {
     return c.json(
       {
         error: {
@@ -64,4 +64,3 @@ export const requirePublisher = createMiddleware<AuthEnv>(async (c, next) => {
 
   await next();
 });
-

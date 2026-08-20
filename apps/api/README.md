@@ -11,6 +11,12 @@ cp .env.example .env
 
 `.env` にTursoの接続情報と32文字以上の `BETTER_AUTH_SECRET` を設定してください。
 
+ローカルSQLiteを使う場合は `TURSO_DATABASE_URL=file:local.db` と設定できます。
+
+```sh
+bun run db:migrate
+```
+
 ## 認証スキーマ生成
 
 `src/auth.ts` の設定から `src/db/auth-schema.ts` を生成します。
@@ -30,6 +36,19 @@ bun run dev
 - API: `http://localhost:3000`
 - Better Auth: `http://localhost:3000/api/auth/*`
 - ヘルスチェック: `http://localhost:3000/api/health`
+- DB接続確認: `http://localhost:3000/api/ready`
+
+Web側のVite開発サーバーは `/api` をこのAPIにプロキシします。`apps/web/.env` の
+`VITE_ENABLE_MOCKS=false` または未設定でHono APIが使われます。
+
+## 実装済みルート
+
+- Better Authのメール登録・ログイン・ログアウト・セッション
+- 本人プロフィールとアカウント情報の取得・更新
+- 動物園公開プロフィール
+- フィード、検索、お気に入り、通常コメント
+
+投げ銭などの決済ルートは、Stripe SandboxとWebhookが接続されるまで成功扱いにしません。
 
 ## 認証ミドルウェア
 
