@@ -197,9 +197,9 @@ const zooProfileDetails: Record<string, { bio: string; supporterCount: number; v
   },
 }
 
-function toProfileMedia(video: (typeof mockVideos)[number], suffix = '') {
+function toProfileVideo(video: (typeof mockVideos)[number]) {
   return {
-    id: `${video.id}${suffix}`,
+    id: video.id,
     videoId: video.id,
     videoUrl: video.videoUrl,
     title: video.caption,
@@ -207,6 +207,33 @@ function toProfileMedia(video: (typeof mockVideos)[number], suffix = '') {
     thumbnailTime: video.thumbnailTime,
   }
 }
+
+const mockGalleryPosts = [
+  {
+    id: 'gallery-penguins',
+    imageUrl: '/gallery01.jpg',
+    caption: 'みんなでお散歩中のペンギンたち。とても賢く並んでいました！',
+    createdAt: '2026-08-19T11:30:00.000Z',
+    author: { id: 'mock-google-user', name: 'Google User' },
+    zoo: { id: 'higashiyama', name: '東山動植物園' },
+  },
+  {
+    id: 'gallery-hippo',
+    imageUrl: '/gallery02.jpg',
+    caption: '水辺をゆっくり歩くカバに会えました。近くで見ると迫力満点です。',
+    createdAt: '2026-08-18T14:10:00.000Z',
+    author: { id: 'mock-google-user', name: 'Google User' },
+    zoo: { id: 'higashiyama', name: '東山動植物園' },
+  },
+  {
+    id: 'gallery-monkeys',
+    imageUrl: '/gallery03.jpg',
+    caption: '仲良く寄り添うニホンザル。ほっこりする瞬間を撮影できました。',
+    createdAt: '2026-08-17T09:45:00.000Z',
+    author: { id: 'mock-google-user', name: 'Google User' },
+    zoo: { id: 'higashiyama', name: '東山動植物園' },
+  },
+]
 
 export const handlers = [
   http.get('*/api/health', async () => {
@@ -310,8 +337,14 @@ export const handlers = [
       videoCount: null,
       supporterCount: null,
       supportPrice: null,
-      media: mockVideos.slice(0, 6).map((video) => toProfileMedia(video, '-gallery')),
-      supporterMedia: [],
+      videos: [],
+      galleryPosts: mockGalleryPosts.map((post) => ({
+        ...post,
+        author: {
+          id: token === MOCK_GOOGLE_TOKEN ? 'mock-google-user' : 'mock-email-user',
+          name: token === MOCK_GOOGLE_TOKEN ? 'Google User' : 'Mock User',
+        },
+      })),
     })
   }),
   http.get('*/api/zoos/:zooId/profile', async ({ params }) => {
@@ -336,10 +369,8 @@ export const handlers = [
       videoCount: details.videoCount,
       supporterCount: details.supporterCount,
       supportPrice: videos[0].supportPrice,
-      media: videos.map((video) => toProfileMedia(video)),
-      supporterMedia: videos
-        .toReversed()
-        .map((video) => toProfileMedia(video, '-supporter')),
+      videos: videos.map((video) => toProfileVideo(video)),
+      galleryPosts: mockGalleryPosts.filter((post) => post.zoo.id === zooId),
     })
   }),
   http.get('*/api/feed', async () => {

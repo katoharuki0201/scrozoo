@@ -1,15 +1,15 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
-import { useAuth } from '../../auth/hooks/use-auth'
 import { BottomNavigation } from '../../../shared/ui/bottom-navigation'
 import {
   AccountCircleIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
 } from '../../../shared/ui/icons'
-import type { Profile, ProfileViewMode } from '../model/profile'
+import type { GalleryPost, Profile, ProfileViewMode } from '../model/profile'
+import { GalleryPostDialog } from './gallery-post-dialog'
 import { ProfileAvatar } from './profile-avatar'
-import { ProfileMediaGrid } from './profile-media-grid'
+import { ProfileGalleryGrid, ProfileVideoGrid } from './profile-media-grid'
 
 type ProfileTab = 'videos' | 'supporter-gallery'
 
@@ -22,12 +22,10 @@ export function ProfileScreen({
   viewMode: ProfileViewMode
   onSupport?: () => void
 }) {
-  const { user } = useAuth()
   const [tab, setTab] = useState<ProfileTab>('videos')
+  const [selectedPost, setSelectedPost] = useState<GalleryPost | null>(null)
   const isCreator = profile.accountRole === 'creator'
   const isSupporterGallery = isCreator && tab === 'supporter-gallery'
-  const isLocked = isSupporterGallery && user?.plan !== 'supporter' && viewMode === 'public'
-  const media = isSupporterGallery ? profile.supporterMedia : profile.media
   const showSupportButton = isCreator && viewMode === 'public' && profile.supportPrice !== null
 
   return (
@@ -104,13 +102,12 @@ export function ProfileScreen({
               </button>
             </div>
             <div className="mt-2">
-              <ProfileMediaGrid items={media} locked={isLocked} />
+              {isSupporterGallery ? (
+                <ProfileGalleryGrid items={profile.galleryPosts} onSelect={setSelectedPost} />
+              ) : (
+                <ProfileVideoGrid items={profile.videos} />
+              )}
             </div>
-            {isLocked && (
-              <p className="px-7 py-5 text-center text-sm font-bold leading-6 text-slate-600">
-                応援プランに参加すると限定ギャラリーを楽しめます。
-              </p>
-            )}
           </div>
         ) : (
           <div>
@@ -118,7 +115,7 @@ export function ProfileScreen({
               ギャラリー
             </h2>
             <div className="mt-2">
-              <ProfileMediaGrid items={profile.media} />
+              <ProfileGalleryGrid items={profile.galleryPosts} onSelect={setSelectedPost} />
             </div>
           </div>
         )}
@@ -135,6 +132,10 @@ export function ProfileScreen({
       )}
 
       <BottomNavigation activePath={viewMode === 'self' ? '/mypage' : '/'} />
+
+      {selectedPost && (
+        <GalleryPostDialog onClose={() => setSelectedPost(null)} post={selectedPost} />
+      )}
     </main>
   )
 }
