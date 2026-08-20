@@ -8,6 +8,7 @@ import { PlaceholderPage } from './pages/placeholder-page'
 import { SearchResultsPage } from './pages/search-results-page'
 import { MyProfilePage } from './pages/my-profile-page'
 import { ZooProfilePage } from './pages/zoo-profile-page'
+import { AccountInformationPage } from './pages/account-information-page'
 
 function App() {
   return (
@@ -21,7 +22,7 @@ function App() {
         <Route path="/scan" element={<PlaceholderPage title="QR読み込み" />} />
         <Route path="/favorites" element={<PlaceholderPage title="お気に入り" />} />
         <Route path="/mypage" element={<MyProfilePage />} />
-        <Route path="/mypage/account" element={<PlaceholderPage title="アカウント情報" />} />
+        <Route path="/mypage/account" element={<AccountInformationPage />} />
         <Route path="/search" element={<SearchResultsPage />} />
         <Route path="/zoos/:zooId" element={<ZooProfilePage />} />
         <Route path="*" element={<NotFoundPage />} />

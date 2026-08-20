@@ -55,6 +55,19 @@ const loginRequestSchema = z.object({
   password: z.string().min(8),
 })
 
+const accountInformationRequestSchema = z.object({
+  name: z.string().trim().min(1).max(30),
+  email: z.email(),
+  bio: z.string().trim().max(200),
+})
+
+const defaultBio = '【動物動画の鑑賞垢】動物たちの可愛い姿や面白いハプニング動画を見て日々癒やされています。もふもふ系の動画に無言いいね多めです。素敵な投稿いつもありがとうございます！'
+
+const accountByToken = new Map([
+  [MOCK_EMAIL_TOKEN, { name: 'Mock User', email: 'mock.user@example.com', bio: defaultBio }],
+  [MOCK_GOOGLE_TOKEN, { name: 'Google User', email: 'google.user@example.com', bio: defaultBio }],
+])
+
 function getToken(request: Request) {
   return request.headers.get('Authorization')?.replace(/^Bearer\s+/i, '')
 }
@@ -257,6 +270,11 @@ export const handlers = [
     }
 
     const name = result.data.email.split('@')[0]
+    accountByToken.set(MOCK_EMAIL_TOKEN, {
+      name,
+      email: result.data.email,
+      bio: accountByToken.get(MOCK_EMAIL_TOKEN)?.bio ?? defaultBio,
+    })
 
     return HttpResponse.json({
       token: MOCK_EMAIL_TOKEN,
@@ -291,10 +309,12 @@ export const handlers = [
     const token = getToken(request)
 
     if (token === MOCK_EMAIL_TOKEN) {
+      const account = accountByToken.get(MOCK_EMAIL_TOKEN)!
+
       return HttpResponse.json({
         id: 'mock-email-user',
-        name: 'Mock User',
-        email: 'mock.user@example.com',
+        name: account.name,
+        email: account.email,
         avatarUrl: null,
         plan: 'free',
         role: 'viewer',
@@ -302,10 +322,12 @@ export const handlers = [
     }
 
     if (token === MOCK_GOOGLE_TOKEN) {
+      const account = accountByToken.get(MOCK_GOOGLE_TOKEN)!
+
       return HttpResponse.json({
         id: 'mock-google-user',
-        name: 'Google User',
-        email: 'google.user@example.com',
+        name: account.name,
+        email: account.email,
         avatarUrl: null,
         plan: 'free',
         role: 'viewer',
@@ -319,6 +341,39 @@ export const handlers = [
 
     return new HttpResponse(null, { status: 204 })
   }),
+  http.get('*/api/profiles/me/account', async ({ request }) => {
+    await delay(250)
+
+    const account = accountByToken.get(getToken(request) ?? '')
+
+    if (!account) {
+      return HttpResponse.json({ message: 'Unauthorized' }, { status: 401 })
+    }
+
+    return HttpResponse.json(account)
+  }),
+  http.patch('*/api/profiles/me/account', async ({ request }) => {
+    await delay(450)
+
+    const token = getToken(request) ?? ''
+
+    if (!accountByToken.has(token)) {
+      return HttpResponse.json({ message: 'Unauthorized' }, { status: 401 })
+    }
+
+    const result = accountInformationRequestSchema.safeParse(await request.json())
+
+    if (!result.success) {
+      return HttpResponse.json(
+        { message: '入力内容を確認してください。' },
+        { status: 400 },
+      )
+    }
+
+    accountByToken.set(token, result.data)
+
+    return HttpResponse.json(result.data)
+  }),
   http.get('*/api/profiles/me', async ({ request }) => {
     await delay(280)
 
@@ -328,12 +383,14 @@ export const handlers = [
       return HttpResponse.json({ message: 'Unauthorized' }, { status: 401 })
     }
 
+    const account = accountByToken.get(token)!
+
     return HttpResponse.json({
       id: token === MOCK_GOOGLE_TOKEN ? 'mock-google-user' : 'mock-email-user',
       accountRole: 'viewer',
-      name: token === MOCK_GOOGLE_TOKEN ? 'Google User' : 'Mock User',
+      name: account.name,
       avatarUrl: null,
-      bio: '【動物動画の鑑賞垢】動物たちの可愛い姿や面白いハプニング動画を見て日々癒やされています。もふもふ系の動画に無言いいね多めです。素敵な投稿いつもありがとうございます！',
+      bio: account.bio,
       videoCount: null,
       supporterCount: null,
       supportPrice: null,
@@ -342,7 +399,7 @@ export const handlers = [
         ...post,
         author: {
           id: token === MOCK_GOOGLE_TOKEN ? 'mock-google-user' : 'mock-email-user',
-          name: token === MOCK_GOOGLE_TOKEN ? 'Google User' : 'Mock User',
+          name: account.name,
         },
       })),
     })
