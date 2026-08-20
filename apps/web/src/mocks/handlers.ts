@@ -3,6 +3,7 @@ import { z } from 'zod'
 
 const MOCK_EMAIL_TOKEN = 'mock-email-session-token'
 const MOCK_GOOGLE_TOKEN = 'mock-google-session-token'
+const MOCK_CREATOR_TOKEN = 'mock-creator-session-token'
 
 let likedVideoIds = new Set<string>([
   'kangaroo-snow',
@@ -25,6 +26,43 @@ let mockSupportPlans = [
     status: 'active' as 'active' | 'cancel_scheduled',
   },
 ]
+
+const supporterNames = [
+  'kuma_maru',
+  'aozora',
+  'animal_fan',
+  'mofumofu_days',
+  'zoo_life',
+  'haru_camera',
+  'panda_note',
+  'sora_park',
+  'yume_animal',
+  'natsu_photo',
+  'rin_zoo',
+  'tomo_walk',
+]
+
+const mockCreatorSupporters = Array.from({ length: 38 }, (_, index) => {
+  const baseName = supporterNames[index % supporterNames.length]
+  const name = index < supporterNames.length
+    ? baseName
+    : `${baseName}_${Math.floor(index / supporterNames.length) + 1}`
+  const joinedAt = new Date(Date.UTC(2026, 7, 20 - index))
+  const nextRenewalDate = new Date(Date.UTC(2026, 8, (index % 25) + 1))
+
+  return {
+    id: `supporter-${index + 1}`,
+    name,
+    initials: name
+      .split('_')
+      .slice(0, 2)
+      .map((part) => part.charAt(0).toUpperCase())
+      .join(''),
+    joinedAt: joinedAt.toISOString().slice(0, 10),
+    nextRenewalDate: nextRenewalDate.toISOString().slice(0, 10),
+    status: [5, 17, 29].includes(index) ? 'cancel_scheduled' as const : 'active' as const,
+  }
+})
 
 type MockSupportGoal = {
   id: string
@@ -153,10 +191,12 @@ const creatorPostMetadataSchema = z.object({
 })
 
 const defaultBio = '【動物動画の鑑賞垢】動物たちの可愛い姿や面白いハプニング動画を見て日々癒やされています。もふもふ系の動画に無言いいね多めです。素敵な投稿いつもありがとうございます！'
+const creatorBio = '【多摩動物公園 公式】豊かな自然の中で個性あふれる動物たちと出会える場所。園内の最新情報や動物たちのほっこりする日常動画をお届けします！'
 
 const accountByToken = new Map<string, { name: string; email: string; bio: string; role: 'viewer' | 'creator' }>([
   [MOCK_EMAIL_TOKEN, { name: 'Mock User', email: 'mock.user@example.com', bio: defaultBio, role: 'viewer' }],
   [MOCK_GOOGLE_TOKEN, { name: 'Google User', email: 'google.user@example.com', bio: defaultBio, role: 'viewer' }],
+  [MOCK_CREATOR_TOKEN, { name: '多摩動物公園', email: 'creator@scrozoo.jp', bio: creatorBio, role: 'creator' }],
 ])
 
 const registeredEmails = new Set([
@@ -440,19 +480,18 @@ export const handlers = [
     const creatorLogin = result.data.email.toLowerCase() === 'creator@scrozoo.jp'
     const name = creatorLogin ? '多摩動物公園' : result.data.email.split('@')[0]
     const role = creatorLogin ? 'creator' as const : 'viewer' as const
-    accountByToken.set(MOCK_EMAIL_TOKEN, {
+    const token = creatorLogin ? MOCK_CREATOR_TOKEN : MOCK_EMAIL_TOKEN
+    accountByToken.set(token, {
       name,
       email: result.data.email,
-      bio: creatorLogin
-        ? zooProfileDetails.tama.bio
-        : accountByToken.get(MOCK_EMAIL_TOKEN)?.bio ?? defaultBio,
+      bio: creatorLogin ? creatorBio : accountByToken.get(MOCK_EMAIL_TOKEN)?.bio ?? defaultBio,
       role,
     })
 
     return HttpResponse.json({
-      token: MOCK_EMAIL_TOKEN,
+      token,
       user: {
-        id: 'mock-email-user',
+        id: creatorLogin ? 'mock-creator-user' : 'mock-email-user',
         name,
         email: result.data.email,
         avatarUrl: null,
@@ -480,25 +519,15 @@ export const handlers = [
     await delay(250)
 
     const token = getToken(request)
+    const account = accountByToken.get(token ?? '')
 
-    if (token === MOCK_EMAIL_TOKEN) {
-      const account = accountByToken.get(MOCK_EMAIL_TOKEN)!
-
+    if (account) {
       return HttpResponse.json({
-        id: 'mock-email-user',
-        name: account.name,
-        email: account.email,
-        avatarUrl: null,
-        plan: 'free',
-        role: account.role,
-      })
-    }
-
-    if (token === MOCK_GOOGLE_TOKEN) {
-      const account = accountByToken.get(MOCK_GOOGLE_TOKEN)!
-
-      return HttpResponse.json({
-        id: 'mock-google-user',
+        id: token === MOCK_CREATOR_TOKEN
+          ? 'mock-creator-user'
+          : token === MOCK_GOOGLE_TOKEN
+            ? 'mock-google-user'
+            : 'mock-email-user',
         name: account.name,
         email: account.email,
         avatarUrl: null,
@@ -816,16 +845,31 @@ export const handlers = [
       { status: 201 },
     )
   }),
+  http.get('*/api/creator/supporters', async ({ request }) => {
+    await delay(420)
+
+    const account = accountByToken.get(getToken(request) ?? '')
+
+    if (account?.role !== 'creator') {
+      return HttpResponse.json({ message: 'Forbidden' }, { status: 403 })
+    }
+
+    return HttpResponse.json({
+      totalCount: mockCreatorSupporters.length,
+      monthlySupportAmount: mockCreatorSupporters.length * 500,
+      supporters: mockCreatorSupporters,
+    })
+  }),
   http.get('*/api/profiles/me', async ({ request }) => {
     await delay(280)
 
     const token = getToken(request)
 
-    if (token !== MOCK_EMAIL_TOKEN && token !== MOCK_GOOGLE_TOKEN) {
+    if (!accountByToken.has(token ?? '')) {
       return HttpResponse.json({ message: 'Unauthorized' }, { status: 401 })
     }
 
-    const account = accountByToken.get(token)!
+    const account = accountByToken.get(token!)!
 
     if (account.role === 'creator') {
       const zooId = 'tama'

@@ -56,7 +56,7 @@ export function LoginPage() {
 
   function completeLogin(session: AuthSession) {
     authenticate(session)
-    void navigate(from, { replace: true })
+    void navigate(session.user.role === 'creator' && from === '/' ? '/mypage' : from, { replace: true })
   }
 
   const emailLogin = useMutation({

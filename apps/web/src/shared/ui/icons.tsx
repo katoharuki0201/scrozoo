@@ -102,3 +102,7 @@ export function TrashIcon(props: IconProps) {
 export function LogOutIcon(props: IconProps) {
   return <svg {...defaults} {...props}><path d="M10 17l5-5-5-5m5 5H3" /><path d="M14 4h5a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-5" /></svg>
 }
+
+export function UsersIcon(props: IconProps) {
+  return <svg {...defaults} {...props}><circle cx="9" cy="8" r="4" /><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a4 4 0 0 1 0 7.5M17 15a5.5 5.5 0 0 1 4.5 5" /></svg>
+}

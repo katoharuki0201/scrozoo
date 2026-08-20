@@ -148,7 +148,7 @@ export function CreatorPostCreationPage() {
           </button>
         </form>
       </div>
-      <BottomNavigation activePath="/mypage" />
+      <BottomNavigation activePath="/mypage/posts/new" />
     </main>
   )
 }

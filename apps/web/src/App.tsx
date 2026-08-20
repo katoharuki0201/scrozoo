@@ -1,6 +1,8 @@
 import { Route, Routes } from 'react-router'
 import { GuestOnlyRoute } from './features/auth/components/guest-only-route'
 import { ProtectedRoute } from './features/auth/components/protected-route'
+import { CreatorOnlyRoute } from './features/auth/components/creator-only-route'
+import { ViewerOnlyRoute } from './features/auth/components/viewer-only-route'
 import { HomePage } from './pages/home-page'
 import { LoginPage } from './pages/login-page'
 import { RegistrationPage } from './pages/registration-page'
@@ -15,6 +17,7 @@ import { GalleryCapturePage } from './pages/gallery-capture-page'
 import { SupportPlansPage } from './pages/support-plans-page'
 import { SupportGoalManagementPage } from './pages/support-goal-management-page'
 import { CreatorPostCreationPage } from './pages/creator-post-creation-page'
+import { CreatorSupportersPage } from './pages/creator-supporters-page'
 
 function App() {
   return (
@@ -25,17 +28,25 @@ function App() {
       </Route>
 
       <Route element={<ProtectedRoute />}>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/scan" element={<QrScanPage />} />
-        <Route path="/scan/capture/:sessionId" element={<GalleryCapturePage />} />
-        <Route path="/favorites" element={<FavoritesPage />} />
         <Route path="/mypage" element={<MyProfilePage />} />
         <Route path="/mypage/account" element={<AccountInformationPage />} />
-        <Route path="/mypage/plans" element={<SupportPlansPage />} />
-        <Route path="/mypage/support-goal" element={<SupportGoalManagementPage />} />
-        <Route path="/mypage/posts/new" element={<CreatorPostCreationPage />} />
-        <Route path="/search" element={<SearchResultsPage />} />
-        <Route path="/zoos/:zooId" element={<ZooProfilePage />} />
+
+        <Route element={<ViewerOnlyRoute />}>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/scan" element={<QrScanPage />} />
+          <Route path="/scan/capture/:sessionId" element={<GalleryCapturePage />} />
+          <Route path="/favorites" element={<FavoritesPage />} />
+          <Route path="/mypage/plans" element={<SupportPlansPage />} />
+          <Route path="/search" element={<SearchResultsPage />} />
+          <Route path="/zoos/:zooId" element={<ZooProfilePage />} />
+        </Route>
+
+        <Route element={<CreatorOnlyRoute />}>
+          <Route path="/mypage/support-goal" element={<SupportGoalManagementPage />} />
+          <Route path="/mypage/posts/new" element={<CreatorPostCreationPage />} />
+          <Route path="/mypage/supporters" element={<CreatorSupportersPage />} />
+        </Route>
+
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>

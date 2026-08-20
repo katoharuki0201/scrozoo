@@ -10,7 +10,6 @@ import {
   ClipboardListIcon,
   LogOutIcon,
   TargetIcon,
-  UploadIcon,
   XIcon,
 } from '../../../shared/ui/icons'
 import { SupportGoalProgress } from '../../support-goal/components/support-goal-progress'
@@ -103,16 +102,6 @@ export function ProfileScreen({
 
           {viewMode === 'self' && (
             <div className="mt-7 space-y-3">
-              {isCreator && (
-                <Link
-                  className="flex h-17 items-center rounded-2xl bg-slate-900 px-5 text-white active:bg-slate-800"
-                  to="/mypage/posts/new"
-                >
-                  <UploadIcon className="size-8" />
-                  <span className="ml-3 flex-1 text-base font-bold">動画を投稿する</span>
-                  <ChevronRightIcon className="size-7" />
-                </Link>
-              )}
               <Link
                 className="flex h-17 items-center rounded-2xl bg-slate-200 px-5 text-slate-800 active:bg-slate-300"
                 to="/mypage/account"
@@ -121,14 +110,16 @@ export function ProfileScreen({
                 <span className="ml-3 flex-1 text-base font-bold">アカウント情報</span>
                 <ChevronRightIcon className="size-7" />
               </Link>
-              <Link
-                className="flex h-17 items-center rounded-2xl bg-slate-200 px-5 text-slate-800 active:bg-slate-300"
-                to="/mypage/plans"
-              >
-                <ClipboardListIcon className="size-8" />
-                <span className="ml-3 flex-1 text-base font-bold">加入中のプラン</span>
-                <ChevronRightIcon className="size-7" />
-              </Link>
+              {!isCreator && (
+                <Link
+                  className="flex h-17 items-center rounded-2xl bg-slate-200 px-5 text-slate-800 active:bg-slate-300"
+                  to="/mypage/plans"
+                >
+                  <ClipboardListIcon className="size-8" />
+                  <span className="ml-3 flex-1 text-base font-bold">加入中のプラン</span>
+                  <ChevronRightIcon className="size-7" />
+                </Link>
+              )}
               {isCreator && (
                 <Link
                   className="flex h-17 items-center rounded-2xl bg-slate-200 px-5 text-slate-800 active:bg-slate-300"
