@@ -9,6 +9,7 @@ import { mediaAsset } from "../db/schema";
 import { getR2Client } from "../lib/r2";
 import {
   extensionFor,
+  bucketVisibilityForPurpose,
   PENDING_UPLOAD_TTL_MS,
   UPLOAD_URL_TTL_SECONDS,
   validateUploadInput,
@@ -32,6 +33,9 @@ uploads.post("/uploads", requireAuth, async (c) => {
   const extension = extensionFor(input.contentType)!;
   const objectKey = `${input.purpose}/${session.user.id}/${id}.${extension}`;
   const expiresAt = new Date(Date.now() + UPLOAD_URL_TTL_SECONDS * 1000);
+  const bucket = bucketVisibilityForPurpose(input.purpose) === "private"
+    ? env.R2_PRIVATE_BUCKET_NAME
+    : env.R2_PUBLIC_BUCKET_NAME;
 
   await db.insert(mediaAsset).values({
     id,
@@ -46,7 +50,7 @@ uploads.post("/uploads", requireAuth, async (c) => {
     const uploadUrl = await getSignedUrl(
       getR2Client(),
       new PutObjectCommand({
-        Bucket: env.R2_PUBLIC_BUCKET_NAME,
+        Bucket: bucket,
         Key: objectKey,
         ContentType: input.contentType,
         ContentLength: input.size,
@@ -68,6 +72,11 @@ uploads.post("/uploads", requireAuth, async (c) => {
 
 uploads.post("/uploads/:uploadId/complete", requireAuth, async (c) => {
   const session = c.get("session")!;
+  const body = await c.req.json<unknown>().catch(() => null);
+  const requestedEtag = body && typeof body === "object" && "etag" in body && typeof body.etag === "string"
+    ? body.etag
+    : null;
+  if (!requestedEtag) return c.json({ error: { code: "VALIDATION_ERROR", message: "ETagが必要です" } }, 422);
   const [asset] = await db.select().from(mediaAsset).where(and(
     eq(mediaAsset.id, c.req.param("uploadId")),
     eq(mediaAsset.uploaderUserId, session.user.id),
@@ -81,10 +90,13 @@ uploads.post("/uploads/:uploadId/complete", requireAuth, async (c) => {
   }
 
   const env = getApiEnv();
+  const bucket = bucketVisibilityForPurpose(asset.purpose) === "private"
+    ? env.R2_PRIVATE_BUCKET_NAME
+    : env.R2_PUBLIC_BUCKET_NAME;
   let result;
   try {
     result = await getR2Client().send(new HeadObjectCommand({
-      Bucket: env.R2_PUBLIC_BUCKET_NAME,
+      Bucket: bucket,
       Key: asset.objectKey,
     }));
   } catch (error) {
@@ -92,7 +104,11 @@ uploads.post("/uploads/:uploadId/complete", requireAuth, async (c) => {
     if (status === 404) return c.json({ error: { code: "UPLOAD_INCOMPLETE", message: "R2へのアップロードを確認できません" } }, 409);
     throw error;
   }
-  if (result.ContentLength !== asset.byteSize || result.ContentType?.toLowerCase() !== asset.contentType) {
+  if (
+    result.ContentLength !== asset.byteSize ||
+    result.ContentType?.toLowerCase() !== asset.contentType ||
+    result.ETag !== requestedEtag
+  ) {
     return c.json({ error: { code: "UPLOAD_MISMATCH", message: "アップロードされたファイルが申告内容と一致しません" } }, 422);
   }
 

@@ -9,6 +9,7 @@ import { profiles } from './routes/profiles'
 import { content } from './routes/content'
 import { uploads } from './routes/uploads'
 import { getApiEnv } from './config/env'
+import { creatorPosts } from './routes/creator-posts'
 
 getApiEnv()
 
@@ -40,6 +41,7 @@ app.use('/api/*', sessionMiddleware)
 app.route('/api', profiles)
 app.route('/api', content)
 app.route('/api', uploads)
+app.route('/api', creatorPosts)
 
 app.get('/', (c) => {
   return c.text('Scrozoo API')

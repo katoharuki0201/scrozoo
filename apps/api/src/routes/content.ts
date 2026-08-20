@@ -1,5 +1,7 @@
 import { and, count, desc, eq, inArray } from "drizzle-orm";
 import { Hono } from "hono";
+import { GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 import { db } from "../db";
 import {
@@ -15,6 +17,8 @@ import {
   zoo,
 } from "../db/schema";
 import { requireAuth, type AuthEnv } from "../middleware/auth";
+import { getApiEnv } from "../config/env";
+import { getR2Client } from "../lib/r2";
 
 const content = new Hono<AuthEnv>();
 
@@ -39,6 +43,8 @@ async function feedRows(currentUserId?: string) {
       objectKey: mediaAsset.objectKey,
       zooId: zoo.id,
       zooName: zoo.name,
+      publisherUserId: zoo.publisherUserId,
+      fullMediaAssetId: video.fullMediaAssetId,
       caption: video.description,
       publishedAt: video.publishedAt,
     })
@@ -65,9 +71,25 @@ async function feedRows(currentUserId?: string) {
         : Promise.resolve([]),
     ]);
 
+    const canPlayFull = Boolean(currentUserId) && (
+      row.publisherUserId === currentUserId || supported.length > 0
+    );
+    let videoUrl = mediaUrl(row.objectKey);
+    if (canPlayFull) {
+      const [fullAsset] = await db.select({ objectKey: mediaAsset.objectKey }).from(mediaAsset)
+        .where(and(eq(mediaAsset.id, row.fullMediaAssetId), eq(mediaAsset.status, "ready"))).limit(1);
+      if (fullAsset) {
+        const env = getApiEnv();
+        videoUrl = await getSignedUrl(getR2Client(), new GetObjectCommand({
+          Bucket: env.R2_PRIVATE_BUCKET_NAME,
+          Key: fullAsset.objectKey,
+        }), { expiresIn: 10 * 60 });
+      }
+    }
+
     return {
       id: row.id,
-      videoUrl: mediaUrl(row.objectKey),
+      videoUrl,
       zoo: { id: row.zooId, name: row.zooName, avatarUrl: "/icon.jpg" },
       caption: row.caption,
       tags: tags.map((item) => item.name),

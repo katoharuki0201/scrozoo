@@ -138,7 +138,7 @@ GET は `after`、`cursor`、`limit` を受け取る。メッセージは最大5
 | `POST` | `/api/publisher/animals` | 動物を登録 |
 | `PATCH` | `/api/publisher/animals/:animalId` | 動物情報を更新 |
 | `GET` | `/api/publisher/videos` | 自身の投稿動画一覧 |
-| `POST` | `/api/publisher/videos` | アップロード済み動画から投稿を作成 |
+| `POST` | `/api/creator/posts` | アップロード済み動画から投稿を作成（既存フロント契約） |
 | `PATCH` | `/api/publisher/videos/:videoId` | 説明、動物、タグ、公開状態を更新 |
 | `DELETE` | `/api/publisher/videos/:videoId` | 投稿動画を非公開化 |
 | `GET` | `/api/publisher/supporters` | プラン加入者と投げ銭利用者 |

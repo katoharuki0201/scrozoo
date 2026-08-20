@@ -62,7 +62,7 @@ MSW で実装されているフロントエンド向け API を、Hono、Better 
   - `zooProfile`: JPEG / PNG / WebP
   - `animalProfile`: JPEG / PNG / WebP
   - `galleryImage`: JPEG / WebP
-  - `videoPreview`: MP4
+  - `videoPreview`: MP4 / WebM（ブラウザ内生成時のフォールバック）
   - `video`: MP4
 - [x] `POST /api/uploads/:uploadId/complete` を実装する。
   - R2 上にオブジェクトが存在することを `HEAD` 相当で確認
@@ -73,16 +73,16 @@ MSW で実装されているフロントエンド向け API を、Hono、Better 
 
 ### 非公開メディアの判断
 
-- [ ] フル動画の実装前に、`scrozoo-private` バケットを作成するか決定する。
-- [ ] 加入者限定のフル動画は `scrozoo-public` に保存しない。
-- [ ] 非公開バケットを作る場合、閲覧権限確認後に短時間の `GetObject` 署名付き URL を発行する。
+- [x] フル動画の実装前に、`scrozoo-private` バケットを作成するか決定する。
+- [x] 加入者限定のフル動画は `scrozoo-public` に保存しない。
+- [x] 閲覧権限確認後に短時間の `GetObject` 署名付き URL を発行する。
 
 ## P0: フロントのアップロード移行
 
-- [ ] 投稿者の動画投稿を、Hono への大容量 `multipart/form-data` 送信から R2 への直接 PUT に変更する。
-- [ ] ギャラリー投稿を `imageDataUrl` の JSON 送信から R2 への直接 PUT に変更する。
-- [ ] アップロード中、失敗、再試行、キャンセルの UI を実装する。
-- [ ] R2 の PUT 応答から `ETag` を取得し、完了 API へ送信する。
+- [x] 投稿者の動画投稿を、Hono への大容量 `multipart/form-data` 送信から R2 への直接 PUT に変更する。
+- [x] ギャラリー投稿を `imageDataUrl` の JSON 送信から R2 への直接 PUT に変更する。
+- [x] 動画投稿にアップロード中、失敗、再試行、キャンセルの UI を実装する。
+- [x] R2 の PUT 応答から `ETag` を取得し、完了 API へ送信する。
 
 ## P1: 認証とアカウント
 
@@ -114,14 +114,14 @@ MSW で実装されているフロントエンド向け API を、Hono、Better 
 - [ ] `POST /api/publisher/animals`
 - [ ] `PATCH /api/publisher/animals/:animalId`
 - [ ] `GET /api/publisher/videos`
-- [ ] `POST /api/publisher/videos`
+- [x] `POST /api/creator/posts`（既存フロント契約を維持）
   - `ready` の動画とプレビューメディアのみ指定可
   - セッションの動物園以外のメディアは指定不可
 - [ ] `PATCH /api/publisher/videos/:videoId`
 - [ ] `DELETE /api/publisher/videos/:videoId`
 - [ ] `GET /api/creator/supporters` または `GET /api/publisher/supporters`
 - [ ] `GET /api/publisher/visit-qr`
-- [ ] 現行フロントの `POST /api/creator/posts` を新しいアップロードフローへ置き換える。
+- [x] 現行フロントの `POST /api/creator/posts` を新しいアップロードフローへ置き換える。
 
 ## P1: QR 認証とギャラリー
 

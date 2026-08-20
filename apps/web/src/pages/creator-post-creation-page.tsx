@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useState, type ChangeEvent } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router'
 import { useAuth } from '../features/auth/hooks/use-auth'
@@ -26,6 +26,8 @@ export function CreatorPostCreationPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const uploadAbortRef = useRef<AbortController | null>(null)
   const form = useForm<CreatorPostFormValues>({
     resolver: zodResolver(creatorPostFormSchema),
     defaultValues: { caption: '', tagsText: '' },
@@ -51,7 +53,15 @@ export function CreatorPostCreationPage() {
   }
 
   const postMutation = useMutation({
-    mutationFn: createCreatorPost,
+    mutationFn: (values: CreatorPostFormValues) => {
+      const controller = new AbortController()
+      uploadAbortRef.current = controller
+      setUploadProgress(0)
+      return createCreatorPost(values, {
+        signal: controller.signal,
+        onProgress: setUploadProgress,
+      })
+    },
     onSuccess: (createdVideo) => {
       queryClient.setQueryData<FeedVideo[]>(feedQueryOptions.queryKey, (videos) => [
         createdVideo,
@@ -79,6 +89,7 @@ export function CreatorPostCreationPage() {
       queryClient.removeQueries({ queryKey: ['profile', 'zoo', createdVideo.zoo.id] })
       void navigate('/mypage?videoPosted=1', { replace: true })
     },
+    onSettled: () => { uploadAbortRef.current = null },
   })
 
   if (user?.role !== 'creator') {
@@ -143,9 +154,18 @@ export function CreatorPostCreationPage() {
 
           {postMutation.isError && <p className="rounded-xl bg-red-50 px-4 py-3 text-center text-sm font-bold text-red-600" role="alert">動画を投稿できませんでした。</p>}
 
-          <button className="h-14 w-full rounded-2xl bg-slate-950 text-base font-black text-white shadow-lg disabled:opacity-50" disabled={postMutation.isPending} type="submit">
-            {postMutation.isPending ? '投稿中...' : '動画を投稿する'}
-          </button>
+          {postMutation.isPending && (
+            <div>
+              <div className="h-2 overflow-hidden rounded-full bg-slate-200"><div className="h-full bg-sky-500 transition-[width]" style={{ width: `${Math.round(uploadProgress * 100)}%` }} /></div>
+              <p className="mt-2 text-center text-xs font-bold text-slate-500">アップロード中 {Math.round(uploadProgress * 100)}%</p>
+            </div>
+          )}
+          <div className="flex gap-3">
+            {postMutation.isPending && <button className="h-14 flex-1 rounded-2xl bg-slate-200 text-sm font-black text-slate-700" onClick={() => uploadAbortRef.current?.abort()} type="button">キャンセル</button>}
+            <button className="h-14 flex-1 rounded-2xl bg-slate-950 text-base font-black text-white shadow-lg disabled:opacity-50" disabled={postMutation.isPending} type="submit">
+              {postMutation.isPending ? '投稿中...' : postMutation.isError ? 'もう一度試す' : '動画を投稿する'}
+            </button>
+          </div>
         </form>
       </div>
       <BottomNavigation activePath="/mypage/posts/new" />

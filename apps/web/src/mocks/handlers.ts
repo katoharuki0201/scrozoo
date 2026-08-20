@@ -205,6 +205,9 @@ const createSupportPlanRequestSchema = z.object({
 })
 
 const creatorPostMetadataSchema = z.object({
+  videoUploadId: z.string(),
+  previewUploadId: z.string(),
+  durationMs: z.number().int().positive().max(60_000),
   caption: z.string().trim().min(1).max(120),
   tags: z.array(z.string().trim().min(1).max(20)).max(5),
 })
@@ -516,10 +519,11 @@ export const handlers = [
     upload.uploaded = true
     return new HttpResponse(null, { status: 200, headers: { ETag: '"mock-etag"' } })
   }),
-  http.post('*/api/uploads/:uploadId/complete', async ({ params }) => {
+  http.post('*/api/uploads/:uploadId/complete', async ({ params, request }) => {
     const uploadId = String(params.uploadId)
     const upload = mockUploads.get(uploadId)
-    if (!upload?.uploaded) return HttpResponse.json({ message: 'Upload incomplete' }, { status: 409 })
+    const body = await request.json() as { etag?: unknown }
+    if (!upload?.uploaded || body.etag !== '"mock-etag"') return HttpResponse.json({ message: 'Upload incomplete' }, { status: 409 })
     return HttpResponse.json({ uploadId, objectKey: `mock/${uploadId}`, status: 'ready' })
   }),
   http.get('*/api/health', async () => {
@@ -1012,26 +1016,8 @@ export const handlers = [
       return HttpResponse.json({ message: 'Forbidden' }, { status: 403 })
     }
 
-    const formData = await request.formData()
-    const videoFile = formData.get('video')
-    const caption = formData.get('caption')
-    const tagsValue = formData.get('tags')
-    let tags: unknown = []
-
-    try {
-      tags = typeof tagsValue === 'string' ? JSON.parse(tagsValue) : []
-    } catch {
-      return HttpResponse.json({ message: 'Invalid tags' }, { status: 400 })
-    }
-
-    const metadata = creatorPostMetadataSchema.safeParse({ caption, tags })
-
-    if (
-      !(videoFile instanceof File) ||
-      !videoFile.type.startsWith('video/') ||
-      videoFile.size > 200 * 1024 * 1024 ||
-      !metadata.success
-    ) {
+    const metadata = creatorPostMetadataSchema.safeParse(await request.json())
+    if (!metadata.success) {
       return HttpResponse.json({ message: 'Invalid post' }, { status: 400 })
     }
 

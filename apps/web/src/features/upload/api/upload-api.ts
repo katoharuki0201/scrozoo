@@ -16,7 +16,7 @@ function putFile(
   headers: Record<string, string>,
   options: UploadOptions,
 ) {
-  return new Promise<void>((resolve, reject) => {
+  return new Promise<string>((resolve, reject) => {
     const request = new XMLHttpRequest()
     request.open('PUT', uploadUrl)
     Object.entries(headers).forEach(([name, value]) => request.setRequestHeader(name, value))
@@ -24,8 +24,11 @@ function putFile(
       if (event.lengthComputable) options.onProgress?.(event.loaded / event.total)
     }
     request.onload = () => {
-      if (request.status >= 200 && request.status < 300) resolve()
-      else reject(new Error('ファイルをアップロードできませんでした。'))
+      if (request.status >= 200 && request.status < 300) {
+        const etag = request.getResponseHeader('ETag')
+        if (etag) resolve(etag)
+        else reject(new Error('アップロード結果を確認できませんでした。'))
+      } else reject(new Error('ファイルをアップロードできませんでした。'))
     }
     request.onerror = () => reject(new Error('ファイルをアップロードできませんでした。'))
     request.onabort = () => reject(new DOMException('Upload aborted', 'AbortError'))
@@ -47,10 +50,10 @@ export async function uploadFile(
     size: file.size,
     fileName: file.name,
   }))
-  await putFile(ticket.uploadUrl, file, ticket.headers, options)
+  const etag = await putFile(ticket.uploadUrl, file, ticket.headers, options)
   options.onProgress?.(1)
   return completedUploadSchema.parse(
-    await api.post<unknown>(`uploads/${ticket.uploadId}/complete`),
+    await api.post<unknown>(`uploads/${ticket.uploadId}/complete`, { etag }),
   )
 }
 

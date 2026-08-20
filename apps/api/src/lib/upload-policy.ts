@@ -31,7 +31,7 @@ export const uploadPolicies: Record<MediaPurpose, UploadPolicy> = {
     creatorOnly: false,
   },
   videoPreview: {
-    contentTypes: ["video/mp4"],
+    contentTypes: ["video/mp4", "video/webm"],
     maxBytes: 25 * 1024 * 1024,
     creatorOnly: true,
   },
@@ -84,5 +84,10 @@ export function extensionFor(contentType: string) {
     "image/png": "png",
     "image/webp": "webp",
     "video/mp4": "mp4",
+    "video/webm": "webm",
   }[contentType];
+}
+
+export function bucketVisibilityForPurpose(purpose: MediaPurpose) {
+  return purpose === "video" ? "private" : "public";
 }

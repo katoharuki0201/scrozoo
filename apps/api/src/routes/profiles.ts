@@ -81,7 +81,7 @@ async function creatorProfile(zooId: string) {
       title: video.description,
     })
     .from(video)
-    .innerJoin(mediaAsset, eq(video.fullMediaAssetId, mediaAsset.id))
+    .innerJoin(mediaAsset, eq(video.previewMediaAssetId, mediaAsset.id))
     .where(and(eq(video.zooId, zooId), eq(video.status, "published")))
     .orderBy(desc(video.publishedAt));
 
