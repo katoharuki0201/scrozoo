@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { feedQueryOptions, toggleVideoLike } from '../features/feed/api/feed-api'
 import { FeedSheet } from '../features/feed/components/feed-sheet'
+import { CommentsSheet } from '../features/feed/components/comments-sheet'
 import { VideoFeedCard } from '../features/feed/components/video-feed-card'
 import type { FeedVideo } from '../features/feed/model/feed'
 import { useAuth } from '../features/auth/hooks/use-auth'
@@ -131,14 +132,12 @@ export function HomePage() {
 
         <BottomNavigation />
 
-        {sheet === 'comments' && (
-          <FeedSheet onClose={() => setSheet(null)} title={`コメント ${activeVideo?.commentCount ?? 0}件`}>
-            <div className="mt-5 space-y-5">
-              <div className="flex gap-3"><div className="grid size-9 shrink-0 place-items-center rounded-full bg-orange-100 text-xs font-bold text-orange-700">KM</div><div><p className="text-sm font-bold">kuma_maru</p><p className="mt-1 text-sm text-slate-600">かわいい！ずっと見ていられます。</p></div></div>
-              <div className="flex gap-3"><div className="grid size-9 shrink-0 place-items-center rounded-full bg-sky-100 text-xs font-bold text-sky-700">AO</div><div><p className="text-sm font-bold">aozora</p><p className="mt-1 text-sm text-slate-600">今度のお休みに会いに行きたいです。</p></div></div>
-              <div className="flex gap-2 border-t border-slate-100 pt-4"><input className="h-11 min-w-0 flex-1 rounded-xl bg-slate-100 px-4 text-sm outline-none focus:ring-2 focus:ring-orange-300" placeholder="コメントを追加..." /><button className="rounded-xl bg-slate-950 px-4 text-sm font-bold text-white" type="button">送信</button></div>
-            </div>
-          </FeedSheet>
+        {sheet === 'comments' && activeVideo && (
+          <CommentsSheet
+            commentCount={activeVideo.commentCount}
+            onClose={() => setSheet(null)}
+            videoId={activeVideo.id}
+          />
         )}
 
         {sheet === 'support' && (

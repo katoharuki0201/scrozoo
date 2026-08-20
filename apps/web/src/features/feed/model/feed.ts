@@ -19,3 +19,29 @@ export const feedVideoSchema = z.object({
 export const feedSchema = z.array(feedVideoSchema)
 
 export type FeedVideo = z.infer<typeof feedVideoSchema>
+
+export const feedCommentSchema = z.object({
+  id: z.string(),
+  author: z.object({
+    name: z.string(),
+    initials: z.string(),
+  }),
+  message: z.string(),
+  isSupporter: z.boolean(),
+  tipAmount: z.number(),
+  createdAt: z.string(),
+})
+
+export const feedCommentsSchema = z.array(feedCommentSchema)
+
+export const createCommentSchema = z.object({
+  message: z
+    .string()
+    .trim()
+    .min(1, 'コメントを入力してください。')
+    .max(200, 'コメントは200文字以内で入力してください。'),
+  tipAmount: z.union([z.literal(0), z.literal(100), z.literal(300), z.literal(500)]),
+})
+
+export type FeedComment = z.infer<typeof feedCommentSchema>
+export type CreateCommentValues = z.infer<typeof createCommentSchema>

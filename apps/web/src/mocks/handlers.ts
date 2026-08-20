@@ -6,6 +6,50 @@ const MOCK_GOOGLE_TOKEN = 'mock-google-session-token'
 
 let likedVideoIds = new Set<string>()
 
+const commentRequestSchema = z.object({
+  message: z.string().trim().min(1).max(200),
+  tipAmount: z.union([z.literal(0), z.literal(100), z.literal(300), z.literal(500)]),
+})
+
+const commentsByVideo = new Map<string, Array<Record<string, unknown>>>()
+
+function getComments(videoId: string) {
+  const existing = commentsByVideo.get(videoId)
+
+  if (existing) return existing
+
+  const comments = [
+    {
+      id: `${videoId}-supporter-1`,
+      author: { name: 'kuma_maru', initials: 'KM' },
+      message: 'かわいい！ずっと見ていられます。これからも応援しています！',
+      isSupporter: true,
+      tipAmount: 500,
+      createdAt: new Date(Date.now() - 60_000).toISOString(),
+    },
+    {
+      id: `${videoId}-regular-1`,
+      author: { name: 'aozora', initials: 'AO' },
+      message: '今度のお休みに会いに行きたいです。',
+      isSupporter: false,
+      tipAmount: 0,
+      createdAt: new Date(Date.now() - 120_000).toISOString(),
+    },
+    {
+      id: `${videoId}-supporter-2`,
+      author: { name: 'animal_fan', initials: 'AF' },
+      message: '今日も素敵な動画をありがとうございます。',
+      isSupporter: true,
+      tipAmount: 300,
+      createdAt: new Date(Date.now() - 180_000).toISOString(),
+    },
+  ]
+
+  commentsByVideo.set(videoId, comments)
+
+  return comments
+}
+
 const loginRequestSchema = z.object({
   email: z.email(),
   password: z.string().min(8),
@@ -152,5 +196,36 @@ export const handlers = [
     }
 
     return HttpResponse.json({ isLiked })
+  }),
+  http.get('*/api/feed/:videoId/comments', async ({ params }) => {
+    await delay(250)
+
+    return HttpResponse.json(getComments(String(params.videoId)))
+  }),
+  http.post('*/api/feed/:videoId/comments', async ({ params, request }) => {
+    await delay(350)
+
+    const result = commentRequestSchema.safeParse(await request.json())
+
+    if (!result.success) {
+      return HttpResponse.json(
+        { message: 'コメントの内容を確認してください。' },
+        { status: 400 },
+      )
+    }
+
+    const videoId = String(params.videoId)
+    const comment = {
+      id: crypto.randomUUID(),
+      author: { name: 'Google User', initials: 'GU' },
+      message: result.data.message,
+      isSupporter: false,
+      tipAmount: result.data.tipAmount,
+      createdAt: new Date().toISOString(),
+    }
+
+    getComments(videoId).unshift(comment)
+
+    return HttpResponse.json(comment, { status: 201 })
   }),
 ]

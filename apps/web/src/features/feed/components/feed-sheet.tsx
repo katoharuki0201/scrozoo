@@ -12,7 +12,7 @@ export function FeedSheet({ children, onClose, title }: FeedSheetProps) {
     <div className="absolute inset-0 z-50 flex items-end bg-black/45" role="presentation" onClick={onClose}>
       <section
         aria-modal="true"
-        className="w-full rounded-t-3xl bg-white px-5 pt-3 text-slate-950 shadow-2xl"
+        className="max-h-[88dvh] w-full overflow-y-auto rounded-t-3xl bg-white px-5 pt-3 text-slate-950 shadow-2xl"
         onClick={(event) => event.stopPropagation()}
         role="dialog"
         style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
