@@ -98,3 +98,7 @@ export function UploadIcon(props: IconProps) {
 export function TrashIcon(props: IconProps) {
   return <svg {...defaults} {...props}><path d="M4 7h16M9 7V4h6v3m3 0-1 14H7L6 7m4 4v6m4-6v6" /></svg>
 }
+
+export function LogOutIcon(props: IconProps) {
+  return <svg {...defaults} {...props}><path d="M10 17l5-5-5-5m5 5H3" /><path d="M14 4h5a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-5" /></svg>
+}

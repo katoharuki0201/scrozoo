@@ -1,13 +1,17 @@
+import { useMutation } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
+import { useAuth } from '../../auth/hooks/use-auth'
 import { BottomNavigation } from '../../../shared/ui/bottom-navigation'
 import {
   AccountCircleIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   ClipboardListIcon,
+  LogOutIcon,
   TargetIcon,
   UploadIcon,
+  XIcon,
 } from '../../../shared/ui/icons'
 import { SupportGoalProgress } from '../../support-goal/components/support-goal-progress'
 import type { GalleryPost, Profile, ProfileViewMode } from '../model/profile'
@@ -33,6 +37,12 @@ export function ProfileScreen({
     searchParams.get('tab') === 'gallery' ? 'supporter-gallery' : 'videos',
   )
   const [selectedPost, setSelectedPost] = useState<GalleryPost | null>(null)
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false)
+  const { logout } = useAuth()
+  const logoutMutation = useMutation({
+    mutationFn: logout,
+    onSuccess: () => setAccountMenuOpen(false),
+  })
   const isCreator = profile.accountRole === 'creator'
   const isSupporterGallery = isCreator && tab === 'supporter-gallery'
   const showSupportButton = isCreator && viewMode === 'public' && profile.supportPrice !== null
@@ -59,7 +69,9 @@ export function ProfileScreen({
           ) : (
             <div className="flex h-14 items-center justify-between">
               <p className="-rotate-2 text-3xl font-black tracking-[-0.08em] text-slate-800 italic">Scrozoo</p>
-              <ProfileAvatar avatarUrl={profile.avatarUrl} name={profile.name} size="small" />
+              <button aria-label="アカウントメニューを開く" className="rounded-full" onClick={() => setAccountMenuOpen(true)} type="button">
+                <ProfileAvatar avatarUrl={profile.avatarUrl} name={profile.name} size="small" />
+              </button>
             </div>
           )}
 
@@ -127,6 +139,15 @@ export function ProfileScreen({
                   <ChevronRightIcon className="size-7" />
                 </Link>
               )}
+              <button
+                className="flex h-17 w-full items-center rounded-2xl border border-red-100 bg-red-50 px-5 text-left text-red-600 active:bg-red-100"
+                disabled={logoutMutation.isPending}
+                onClick={() => logoutMutation.mutate()}
+                type="button"
+              >
+                <LogOutIcon className="size-8" />
+                <span className="ml-3 flex-1 text-base font-bold">{logoutMutation.isPending ? 'ログアウト中...' : 'ログアウト'}</span>
+              </button>
             </div>
           )}
         </section>
@@ -187,6 +208,31 @@ export function ProfileScreen({
 
       {selectedPost && (
         <GalleryPostDialog onClose={() => setSelectedPost(null)} post={selectedPost} />
+      )}
+
+      {accountMenuOpen && viewMode === 'self' && (
+        <div className="absolute inset-0 z-50 flex items-end bg-black/45" onClick={() => setAccountMenuOpen(false)} role="presentation">
+          <section aria-label="アカウントメニュー" aria-modal="true" className="w-full rounded-t-3xl bg-white px-5 pt-3" onClick={(event) => event.stopPropagation()} role="dialog" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
+            <div className="mx-auto h-1 w-10 rounded-full bg-slate-300" />
+            <div className="mt-3 flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-black text-slate-900">アカウント</h2>
+                <p className="mt-1 text-sm text-slate-500">{profile.name}</p>
+              </div>
+              <button aria-label="閉じる" className="grid size-10 place-items-center rounded-full bg-slate-100 text-slate-700" onClick={() => setAccountMenuOpen(false)} type="button">
+                <XIcon className="size-5" />
+              </button>
+            </div>
+            <Link className="mt-6 flex h-13 items-center rounded-2xl bg-slate-100 px-4 font-bold text-slate-800" onClick={() => setAccountMenuOpen(false)} to="/mypage/account">
+              <AccountCircleIcon className="size-6" />
+              <span className="ml-3">アカウント情報</span>
+            </Link>
+            <button className="mt-3 flex h-13 w-full items-center rounded-2xl bg-red-50 px-4 text-left font-bold text-red-600 disabled:opacity-50" disabled={logoutMutation.isPending} onClick={() => logoutMutation.mutate()} type="button">
+              <LogOutIcon className="size-6" />
+              <span className="ml-3">{logoutMutation.isPending ? 'ログアウト中...' : 'ログアウト'}</span>
+            </button>
+          </section>
+        </div>
       )}
     </main>
   )
