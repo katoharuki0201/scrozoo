@@ -5,6 +5,7 @@ import { db } from "../db";
 import {
   galleryPost,
   mediaAsset,
+  session as sessionTable,
   subscription,
   user,
   userProfile,
@@ -225,6 +226,18 @@ profiles.patch("/profiles/me/account", async (c) => {
   }
 
   return c.json({ name, email, bio });
+});
+
+profiles.delete("/profiles/me", requireAuth, async (c) => {
+  const session = c.get("session")!;
+  const withdrawnAt = new Date();
+  await db.transaction(async (tx) => {
+    await tx.update(user).set({ name: "退会済みユーザー", image: null, updatedAt: withdrawnAt }).where(eq(user.id, session.user.id));
+    await tx.insert(userProfile).values({ userId: session.user.id, bio: null, withdrawnAt })
+      .onConflictDoUpdate({ target: userProfile.userId, set: { bio: null, withdrawnAt, updatedAt: withdrawnAt } });
+    await tx.delete(sessionTable).where(eq(sessionTable.userId, session.user.id));
+  });
+  return c.body(null, 204);
 });
 
 export { profiles };

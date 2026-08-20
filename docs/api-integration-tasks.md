@@ -88,11 +88,11 @@ MSW で実装されているフロントエンド向け API を、Hono、Better 
 
 - [ ] Google OAuth の `GOOGLE_CLIENT_ID` と `GOOGLE_CLIENT_SECRET` を本番環境へ設定する。
 - [ ] Google OAuth のコールバック URL を Google Cloud Console へ登録する。
-- [ ] 登録時に `user_profile` を自動作成する DB hook または初期化処理を追加する。
-- [ ] `viewer`、`creator`、`admin` のロール名を DB、Better Auth、フロントで統一する。
-- [ ] メールアドレス変更時の再認証・確認メール方針を決める。
-- [ ] パスワード再設定メール送信を実装する。
-- [ ] 退会 API と「退会済みユーザー」への表示名変更を実装する。
+- [x] 登録時に `user_profile` を自動作成する DB hook または初期化処理を追加する。
+- [x] `viewer`、`creator`、`admin` のロール名を DB、Better Auth、フロントで統一する。
+- [x] メールアドレス変更は現行画面との互換性を保つ暫定仕様とし、本番提供前に確認メール方式へ移行する。
+- [x] Resend を使ったパスワード再設定メール送信を実装する。
+- [x] 退会 API と「退会済みユーザー」への表示名変更を実装する。
 
 ## P1: フィード・検索・プロフィールの完成
 

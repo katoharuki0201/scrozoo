@@ -24,6 +24,22 @@ export const auth = betterAuth({
     minPasswordLength: 8,
     maxPasswordLength: 128,
     revokeSessionsOnPasswordReset: true,
+    sendResetPassword: async ({ user, url }) => {
+      const apiKey = process.env.RESEND_API_KEY;
+      const from = process.env.EMAIL_FROM;
+      if (!apiKey || !from) throw new Error("Password reset email is not configured");
+      const response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          from,
+          to: [user.email],
+          subject: "Scrozoo パスワード再設定",
+          text: `以下のURLからパスワードを再設定してください。\n${url}`,
+        }),
+      });
+      if (!response.ok) throw new Error(`Password reset email failed: ${response.status}`);
+    },
   },
   socialProviders:
     googleClientId && googleClientSecret
@@ -40,8 +56,17 @@ export const auth = betterAuth({
       role: {
         type: "string",
         required: true,
-        defaultValue: "user",
+        defaultValue: "viewer",
         input: false,
+      },
+    },
+  },
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (createdUser) => {
+          await db.insert(schema.userProfile).values({ userId: createdUser.id }).onConflictDoNothing();
+        },
       },
     },
   },
