@@ -26,6 +26,47 @@ let mockSupportPlans = [
   },
 ]
 
+type MockSupportGoal = {
+  id: string
+  zooId: string
+  title: string
+  targetAmount: number
+  currentAmount: number
+  deadline: string
+}
+
+const supportGoalsByZoo = new Map<string, MockSupportGoal>([
+  ['tama', {
+    id: 'support-goal-tama',
+    zooId: 'tama',
+    title: 'カンガルー舎に新しい日よけを設置したい',
+    targetAmount: 100_000,
+    currentAmount: 42_300,
+    deadline: '2026-09-30',
+  }],
+])
+
+function toSupportGoal(goal: MockSupportGoal | undefined) {
+  if (!goal) return null
+
+  const expired = new Date(`${goal.deadline}T23:59:59`).getTime() < Date.now()
+  const status = expired
+    ? 'expired'
+    : goal.currentAmount >= goal.targetAmount
+      ? 'achieved'
+      : 'active'
+
+  return { ...goal, status }
+}
+
+function addSupportGoalAmount(zooId: string, amount: number) {
+  const goal = supportGoalsByZoo.get(zooId)
+
+  if (!goal || toSupportGoal(goal)?.status === 'expired') return
+
+  goal.currentAmount += amount
+}
+
 const commentRequestSchema = z.object({
   message: z.string().trim().min(1).max(200),
   tipAmount: z.union([z.literal(0), z.literal(100), z.literal(300), z.literal(500)]),
@@ -90,11 +131,21 @@ const galleryPostRequestSchema = z.object({
   imageDataUrl: z.string().startsWith('data:image/'),
 })
 
+const supportGoalRequestSchema = z.object({
+  title: z.string().trim().min(1).max(50),
+  targetAmount: z.number().int().min(500),
+  deadline: z.string(),
+})
+
+const createSupportPlanRequestSchema = z.object({
+  zooId: z.string(),
+})
+
 const defaultBio = '【動物動画の鑑賞垢】動物たちの可愛い姿や面白いハプニング動画を見て日々癒やされています。もふもふ系の動画に無言いいね多めです。素敵な投稿いつもありがとうございます！'
 
-const accountByToken = new Map([
-  [MOCK_EMAIL_TOKEN, { name: 'Mock User', email: 'mock.user@example.com', bio: defaultBio }],
-  [MOCK_GOOGLE_TOKEN, { name: 'Google User', email: 'google.user@example.com', bio: defaultBio }],
+const accountByToken = new Map<string, { name: string; email: string; bio: string; role: 'viewer' | 'creator' }>([
+  [MOCK_EMAIL_TOKEN, { name: 'Mock User', email: 'mock.user@example.com', bio: defaultBio, role: 'viewer' }],
+  [MOCK_GOOGLE_TOKEN, { name: 'Google User', email: 'google.user@example.com', bio: defaultBio, role: 'viewer' }],
 ])
 
 function getToken(request: Request) {
@@ -305,11 +356,16 @@ export const handlers = [
       )
     }
 
-    const name = result.data.email.split('@')[0]
+    const creatorLogin = result.data.email.toLowerCase() === 'creator@scrozoo.jp'
+    const name = creatorLogin ? '多摩動物公園' : result.data.email.split('@')[0]
+    const role = creatorLogin ? 'creator' as const : 'viewer' as const
     accountByToken.set(MOCK_EMAIL_TOKEN, {
       name,
       email: result.data.email,
-      bio: accountByToken.get(MOCK_EMAIL_TOKEN)?.bio ?? defaultBio,
+      bio: creatorLogin
+        ? zooProfileDetails.tama.bio
+        : accountByToken.get(MOCK_EMAIL_TOKEN)?.bio ?? defaultBio,
+      role,
     })
 
     return HttpResponse.json({
@@ -320,7 +376,7 @@ export const handlers = [
         email: result.data.email,
         avatarUrl: null,
         plan: 'free',
-        role: 'viewer',
+        role,
       },
     })
   }),
@@ -353,7 +409,7 @@ export const handlers = [
         email: account.email,
         avatarUrl: null,
         plan: 'free',
-        role: 'viewer',
+        role: account.role,
       })
     }
 
@@ -366,7 +422,7 @@ export const handlers = [
         email: account.email,
         avatarUrl: null,
         plan: 'free',
-        role: 'viewer',
+        role: account.role,
       })
     }
 
@@ -491,9 +547,61 @@ export const handlers = [
       )
     }
 
-    accountByToken.set(token, result.data)
+    const currentAccount = accountByToken.get(token)!
+    accountByToken.set(token, { ...result.data, role: currentAccount.role })
 
     return HttpResponse.json(result.data)
+  }),
+  http.get('*/api/profiles/me/support-goal', async ({ request }) => {
+    await delay(240)
+
+    const account = accountByToken.get(getToken(request) ?? '')
+
+    if (account?.role !== 'creator') {
+      return HttpResponse.json({ message: 'Forbidden' }, { status: 403 })
+    }
+
+    return HttpResponse.json(toSupportGoal(supportGoalsByZoo.get('tama')))
+  }),
+  http.put('*/api/profiles/me/support-goal', async ({ request }) => {
+    await delay(420)
+
+    const account = accountByToken.get(getToken(request) ?? '')
+    const result = supportGoalRequestSchema.safeParse(await request.json())
+
+    if (account?.role !== 'creator') {
+      return HttpResponse.json({ message: 'Forbidden' }, { status: 403 })
+    }
+
+    if (!result.success || new Date(`${result.data.deadline}T23:59:59`).getTime() <= Date.now()) {
+      return HttpResponse.json({ message: 'Invalid support goal' }, { status: 400 })
+    }
+
+    const currentGoal = supportGoalsByZoo.get('tama')
+    const goal: MockSupportGoal = {
+      id: currentGoal?.id ?? `support-goal-${Date.now()}`,
+      zooId: 'tama',
+      title: result.data.title,
+      targetAmount: result.data.targetAmount,
+      currentAmount: currentGoal?.currentAmount ?? 0,
+      deadline: result.data.deadline,
+    }
+    supportGoalsByZoo.set('tama', goal)
+
+    return HttpResponse.json(toSupportGoal(goal))
+  }),
+  http.delete('*/api/profiles/me/support-goal', async ({ request }) => {
+    await delay(350)
+
+    const account = accountByToken.get(getToken(request) ?? '')
+
+    if (account?.role !== 'creator') {
+      return HttpResponse.json({ message: 'Forbidden' }, { status: 403 })
+    }
+
+    supportGoalsByZoo.delete('tama')
+
+    return new HttpResponse(null, { status: 204 })
   }),
   http.get('*/api/profiles/me/support-plans', async ({ request }) => {
     await delay(280)
@@ -505,6 +613,46 @@ export const handlers = [
     }
 
     return HttpResponse.json(mockSupportPlans)
+  }),
+  http.post('*/api/support-plans', async ({ request }) => {
+    await delay(550)
+
+    const token = getToken(request)
+    const result = createSupportPlanRequestSchema.safeParse(await request.json())
+
+    if (token !== MOCK_EMAIL_TOKEN && token !== MOCK_GOOGLE_TOKEN) {
+      return HttpResponse.json({ message: 'Unauthorized' }, { status: 401 })
+    }
+
+    if (!result.success) {
+      return HttpResponse.json({ message: 'Invalid zoo' }, { status: 400 })
+    }
+
+    const zoo = mockVideos.find((video) => video.zoo.id === result.data.zooId)?.zoo
+
+    if (!zoo) {
+      return HttpResponse.json({ message: 'Not found' }, { status: 404 })
+    }
+
+    const existingPlan = mockSupportPlans.find((plan) => plan.zoo.id === zoo.id)
+
+    if (existingPlan) {
+      return HttpResponse.json(existingPlan)
+    }
+
+    const renewalDate = new Date()
+    renewalDate.setMonth(renewalDate.getMonth() + 1)
+    const plan = {
+      id: `support-plan-${zoo.id}`,
+      zoo,
+      nextRenewalDate: renewalDate.toISOString().slice(0, 10),
+      status: 'active' as const,
+    }
+    supportedZooIds.add(zoo.id)
+    mockSupportPlans.push(plan)
+    addSupportGoalAmount(zoo.id, 500)
+
+    return HttpResponse.json(plan, { status: 201 })
   }),
   http.post('*/api/support-plans/:planId/cancel', async ({ params, request }) => {
     await delay(500)
@@ -540,6 +688,26 @@ export const handlers = [
 
     const account = accountByToken.get(token)!
 
+    if (account.role === 'creator') {
+      const zooId = 'tama'
+      const videos = mockVideos.filter((video) => video.zoo.id === zooId)
+      const details = zooProfileDetails[zooId]
+
+      return HttpResponse.json({
+        id: zooId,
+        accountRole: 'creator',
+        name: account.name,
+        avatarUrl: videos[0].zoo.avatarUrl,
+        bio: account.bio,
+        videoCount: details.videoCount,
+        supporterCount: details.supporterCount,
+        supportPrice: 500,
+        supportGoal: toSupportGoal(supportGoalsByZoo.get(zooId)),
+        videos: videos.map((video) => toProfileVideo(video)),
+        galleryPosts: mockGalleryPosts.filter((post) => post.zoo.id === zooId),
+      })
+    }
+
     return HttpResponse.json({
       id: token === MOCK_GOOGLE_TOKEN ? 'mock-google-user' : 'mock-email-user',
       accountRole: 'viewer',
@@ -549,6 +717,7 @@ export const handlers = [
       videoCount: null,
       supporterCount: null,
       supportPrice: null,
+      supportGoal: null,
       videos: [],
       galleryPosts: mockGalleryPosts.map((post) => ({
         ...post,
@@ -581,6 +750,7 @@ export const handlers = [
       videoCount: details.videoCount,
       supporterCount: details.supporterCount,
       supportPrice: videos[0].supportPrice,
+      supportGoal: toSupportGoal(supportGoalsByZoo.get(zooId)),
       videos: videos.map((video) => toProfileVideo(video)),
       galleryPosts: mockGalleryPosts.filter((post) => post.zoo.id === zooId),
     })
@@ -592,6 +762,7 @@ export const handlers = [
       mockVideos.map((video) => ({
         ...video,
         hasActiveSupportPlan: supportedZooIds.has(video.zoo.id),
+        supportGoal: toSupportGoal(supportGoalsByZoo.get(video.zoo.id)),
         isLiked: likedVideoIds.has(video.id),
         likeCount: video.likeCount + (likedVideoIds.has(video.id) ? 1 : 0),
       })),
@@ -694,6 +865,10 @@ export const handlers = [
       isSupporter: video ? supportedZooIds.has(video.zoo.id) : false,
       tipAmount: result.data.tipAmount,
       createdAt: new Date().toISOString(),
+    }
+
+    if (video && result.data.tipAmount > 0) {
+      addSupportGoalAmount(video.zoo.id, result.data.tipAmount)
     }
 
     getComments(videoId).unshift(comment)

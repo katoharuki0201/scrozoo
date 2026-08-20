@@ -14,6 +14,12 @@ export async function cancelSupportPlan(planId: string) {
   )
 }
 
+export async function createSupportPlan(zooId: string) {
+  return supportPlanSchema.parse(
+    await api.post<unknown>('support-plans', { zooId }),
+  )
+}
+
 export const supportPlansQueryOptions = queryOptions({
   queryKey: ['profile', 'me', 'support-plans'],
   queryFn: getSupportPlans,

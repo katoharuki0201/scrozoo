@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { supportGoalSchema } from '../../support-goal/model/support-goal'
 
 export const feedVideoSchema = z.object({
   id: z.string(),
@@ -14,6 +15,7 @@ export const feedVideoSchema = z.object({
   commentCount: z.number(),
   supportPrice: z.number(),
   hasActiveSupportPlan: z.boolean(),
+  supportGoal: supportGoalSchema.nullable(),
   isLiked: z.boolean(),
 })
 

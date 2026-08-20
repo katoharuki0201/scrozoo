@@ -1,14 +1,43 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useParams } from 'react-router'
 import { zooProfileQueryOptions } from '../features/profile/api/profile-api'
 import { ProfileScreen } from '../features/profile/components/profile-screen'
 import { FeedSheet } from '../features/feed/components/feed-sheet'
+import { createSupportPlan, supportPlansQueryOptions } from '../features/support-plan/api/support-plan-api'
+import type { SupportPlan } from '../features/support-plan/model/support-plan'
+import type { Profile } from '../features/profile/model/profile'
 
 export function ZooProfilePage() {
   const { zooId = '' } = useParams()
+  const queryClient = useQueryClient()
   const profileQuery = useQuery(zooProfileQueryOptions(zooId))
+  const plansQuery = useQuery(supportPlansQueryOptions)
   const [supportOpen, setSupportOpen] = useState(false)
+  const hasActiveSupportPlan = plansQuery.data?.some((plan) => plan.zoo.id === zooId) ?? false
+  const joinMutation = useMutation({
+    mutationFn: createSupportPlan,
+    onSuccess: (plan) => {
+      queryClient.setQueryData<SupportPlan[]>(
+        supportPlansQueryOptions.queryKey,
+        (plans) => plans?.some((item) => item.id === plan.id) ? plans : [...(plans ?? []), plan],
+      )
+      queryClient.setQueryData<Profile>(['profile', 'zoo', zooId], (profile) => {
+        if (!profile?.supportGoal || profile.supportGoal.status === 'expired') return profile
+
+        const currentAmount = profile.supportGoal.currentAmount + 500
+        return {
+          ...profile,
+          supportGoal: {
+            ...profile.supportGoal,
+            currentAmount,
+            status: currentAmount >= profile.supportGoal.targetAmount ? 'achieved' : profile.supportGoal.status,
+          },
+        }
+      })
+      void queryClient.invalidateQueries({ queryKey: ['feed'] })
+    },
+  })
 
   if (profileQuery.isPending) {
     return (
@@ -34,24 +63,31 @@ export function ZooProfilePage() {
   return (
     <>
       <ProfileScreen
-        onSupport={() => setSupportOpen(true)}
+        hasActiveSupportPlan={hasActiveSupportPlan}
+        onSupport={() => {
+          joinMutation.reset()
+          setSupportOpen(true)
+        }}
         profile={profileQuery.data}
         viewMode="public"
       />
       {supportOpen && (
         <div className="fixed inset-0 z-50 mx-auto max-w-[430px]">
           <FeedSheet onClose={() => setSupportOpen(false)} title="応援プラン">
-            <div className="mt-5 rounded-2xl bg-orange-50 p-5">
+            <div className={`mt-5 rounded-2xl p-5 ${hasActiveSupportPlan ? 'bg-emerald-50' : 'bg-orange-50'}`}>
               <p className="text-sm font-bold text-orange-700">{profileQuery.data.name}を応援</p>
               <p className="mt-2 text-3xl font-black">
-                {profileQuery.data.supportPrice}円
-                <span className="text-sm font-medium text-slate-500"> / 月</span>
+                {hasActiveSupportPlan ? '応援プラン加入中' : <>{profileQuery.data.supportPrice}円<span className="text-sm font-medium text-slate-500"> / 月</span></>}
               </p>
               <p className="mt-3 text-sm leading-6 text-slate-600">動画を最後まで視聴しながら、動物たちの暮らしを応援できます。</p>
             </div>
-            <button className="mt-4 h-12 w-full rounded-xl bg-gradient-to-r from-orange-400 via-rose-500 to-sky-400 text-sm font-bold text-white" type="button">
-              応援プランに参加する
-            </button>
+            {!hasActiveSupportPlan && (
+              <button className="mt-4 h-12 w-full rounded-xl bg-gradient-to-r from-orange-400 via-rose-500 to-sky-400 text-sm font-bold text-white disabled:opacity-50" disabled={joinMutation.isPending} onClick={() => joinMutation.mutate(zooId)} type="button">
+                {joinMutation.isPending ? '加入手続き中...' : '応援プランに参加する'}
+              </button>
+            )}
+            {joinMutation.isSuccess && <p className="mt-4 rounded-xl bg-emerald-50 px-4 py-3 text-center text-sm font-bold text-emerald-700" role="status">{profileQuery.data.supportGoal && profileQuery.data.supportGoal.status !== 'expired' ? 'プランに加入し、応援目標に500円追加されました。' : '応援プランに加入しました。'}</p>}
+            {joinMutation.isError && <p className="mt-3 text-center text-sm font-bold text-red-600" role="alert">加入手続きを完了できませんでした。</p>}
           </FeedSheet>
         </div>
       )}

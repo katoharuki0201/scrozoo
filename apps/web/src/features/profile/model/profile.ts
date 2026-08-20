@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { supportGoalSchema } from '../../support-goal/model/support-goal'
 
 export const accountRoleSchema = z.enum(['viewer', 'creator'])
 
@@ -34,6 +35,7 @@ export const profileSchema = z.object({
   videoCount: z.number().int().nonnegative().nullable(),
   supporterCount: z.number().int().nonnegative().nullable(),
   supportPrice: z.number().int().positive().nullable(),
+  supportGoal: supportGoalSchema.nullable(),
   videos: z.array(profileVideoSchema),
   galleryPosts: z.array(galleryPostSchema),
 })

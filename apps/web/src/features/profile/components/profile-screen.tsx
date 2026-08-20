@@ -6,7 +6,9 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   ClipboardListIcon,
+  TargetIcon,
 } from '../../../shared/ui/icons'
+import { SupportGoalProgress } from '../../support-goal/components/support-goal-progress'
 import type { GalleryPost, Profile, ProfileViewMode } from '../model/profile'
 import { GalleryPostDialog } from './gallery-post-dialog'
 import { ProfileAvatar } from './profile-avatar'
@@ -18,10 +20,12 @@ export function ProfileScreen({
   profile,
   viewMode,
   onSupport,
+  hasActiveSupportPlan = false,
 }: {
   profile: Profile
   viewMode: ProfileViewMode
   onSupport?: () => void
+  hasActiveSupportPlan?: boolean
 }) {
   const [searchParams] = useSearchParams()
   const [tab, setTab] = useState<ProfileTab>(
@@ -76,6 +80,12 @@ export function ProfileScreen({
 
           <p className="mt-7 whitespace-pre-line text-[15px] leading-7 text-slate-700">{profile.bio}</p>
 
+          {isCreator && profile.supportGoal && (
+            <div className="mt-6">
+              <SupportGoalProgress goal={profile.supportGoal} />
+            </div>
+          )}
+
           {viewMode === 'self' && (
             <div className="mt-7 space-y-3">
               <Link
@@ -94,6 +104,16 @@ export function ProfileScreen({
                 <span className="ml-3 flex-1 text-base font-bold">加入中のプラン</span>
                 <ChevronRightIcon className="size-7" />
               </Link>
+              {isCreator && (
+                <Link
+                  className="flex h-17 items-center rounded-2xl bg-slate-200 px-5 text-slate-800 active:bg-slate-300"
+                  to="/mypage/support-goal"
+                >
+                  <TargetIcon className="size-8" />
+                  <span className="ml-3 flex-1 text-base font-bold">応援目標の管理</span>
+                  <ChevronRightIcon className="size-7" />
+                </Link>
+              )}
             </div>
           )}
         </section>
@@ -142,11 +162,11 @@ export function ProfileScreen({
 
       {showSupportButton && (
         <button
-          className="absolute inset-x-6 bottom-22 z-30 h-14 rounded-2xl bg-gradient-to-r from-orange-400 via-rose-500 to-sky-400 px-4 text-base font-bold text-white shadow-xl active:scale-[0.99]"
+          className={`absolute inset-x-6 bottom-22 z-30 h-14 rounded-2xl px-4 text-base font-bold text-white shadow-xl active:scale-[0.99] ${hasActiveSupportPlan ? 'bg-emerald-600' : 'bg-gradient-to-r from-orange-400 via-rose-500 to-sky-400'}`}
           onClick={onSupport}
           type="button"
         >
-          応援プラン <span className="text-2xl">{profile.supportPrice}円</span> はこちら！
+          {hasActiveSupportPlan ? '応援プラン加入中' : <>応援プラン <span className="text-2xl">{profile.supportPrice}円</span> はこちら！</>}
         </button>
       )}
 

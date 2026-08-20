@@ -9,6 +9,8 @@ import type { FeedVideo } from '../features/feed/model/feed'
 import { useAuth } from '../features/auth/hooks/use-auth'
 import { BottomNavigation } from '../shared/ui/bottom-navigation'
 import { SearchIcon } from '../shared/ui/icons'
+import { createSupportPlan, supportPlansQueryOptions } from '../features/support-plan/api/support-plan-api'
+import type { SupportPlan } from '../features/support-plan/model/support-plan'
 
 export function HomePage() {
   const navigate = useNavigate()
@@ -81,12 +83,46 @@ export function HomePage() {
       void queryClient.invalidateQueries({ queryKey: ['favorites'] })
     },
   })
+  const joinMutation = useMutation({
+    mutationFn: createSupportPlan,
+    onSuccess: (plan) => {
+      queryClient.setQueryData<SupportPlan[]>(
+        supportPlansQueryOptions.queryKey,
+        (plans) => plans?.some((item) => item.id === plan.id)
+          ? plans
+          : [...(plans ?? []), plan],
+      )
+      queryClient.setQueryData<FeedVideo[]>(feedQueryOptions.queryKey, (videos) =>
+        videos?.map((video) => {
+          if (video.zoo.id !== plan.zoo.id) return video
+
+          const supportGoal = video.supportGoal && video.supportGoal.status !== 'expired'
+            ? {
+                ...video.supportGoal,
+                currentAmount: video.supportGoal.currentAmount + 500,
+                status: video.supportGoal.currentAmount + 500 >= video.supportGoal.targetAmount
+                  ? 'achieved' as const
+                  : video.supportGoal.status,
+              }
+            : video.supportGoal
+
+          return { ...video, hasActiveSupportPlan: true, supportGoal }
+        }),
+      )
+      queryClient.removeQueries({ queryKey: ['profile', 'zoo', plan.zoo.id] })
+    },
+  })
 
   function submitSearch(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const query = search.trim()
 
     if (query) void navigate(`/search?q=${encodeURIComponent(query)}`)
+  }
+
+  function openSupport() {
+    joinMutation.reset()
+    setSheet('support')
   }
 
   const activeVideo = feedQuery.data?.[activeIndex]
@@ -138,7 +174,7 @@ export function HomePage() {
                   item={item}
                   onLike={() => likeMutation.mutate(item.id)}
                   onOpenComments={() => setSheet('comments')}
-                  onSupport={() => setSheet('support')}
+                  onSupport={openSupport}
                 />
               </div>
             ))}
@@ -166,8 +202,23 @@ export function HomePage() {
               <p className="mt-3 text-sm leading-6 text-slate-600">動画を最後まで視聴しながら、動物たちの暮らしを応援できます。</p>
             </div>
             {!activeVideo?.hasActiveSupportPlan && (
-              <button className="mt-4 h-12 w-full rounded-xl bg-gradient-to-r from-orange-400 via-rose-500 to-sky-400 text-sm font-bold text-white" type="button">応援プランに参加する</button>
+              <button
+                className="mt-4 h-12 w-full rounded-xl bg-gradient-to-r from-orange-400 via-rose-500 to-sky-400 text-sm font-bold text-white disabled:opacity-50"
+                disabled={joinMutation.isPending}
+                onClick={() => activeVideo && joinMutation.mutate(activeVideo.zoo.id)}
+                type="button"
+              >
+                {joinMutation.isPending ? '加入手続き中...' : '応援プランに参加する'}
+              </button>
             )}
+            {joinMutation.isSuccess && (
+              <p className="mt-4 rounded-xl bg-emerald-50 px-4 py-3 text-center text-sm font-bold text-emerald-700" role="status">
+                {activeVideo?.supportGoal && activeVideo.supportGoal.status !== 'expired'
+                  ? 'プランに加入し、応援目標に500円追加されました。'
+                  : '応援プランに加入しました。'}
+              </p>
+            )}
+            {joinMutation.isError && <p className="mt-3 text-center text-sm font-bold text-red-600" role="alert">加入手続きを完了できませんでした。</p>}
           </FeedSheet>
         )}
       </div>

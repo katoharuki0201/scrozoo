@@ -114,6 +114,10 @@ export function CommentsSheet({
   const createComment = useMutation({
     mutationFn: (values: CreateCommentValues) => createVideoComment(videoId, values),
     onSuccess: (comment) => {
+      const zooId = queryClient
+        .getQueryData<FeedVideo[]>(feedQueryOptions.queryKey)
+        ?.find((video) => video.id === videoId)?.zoo.id
+
       queryClient.setQueryData<FeedComment[]>(
         videoCommentsQueryOptions(videoId).queryKey,
         (current) => [comment, ...(current ?? [])],
@@ -129,6 +133,11 @@ export function CommentsSheet({
       form.reset({ message: '', tipAmount: 0 })
       setCommentGroup(comment.isSupporter ? 'supporter' : 'regular')
       setPage('list')
+
+      if (comment.tipAmount > 0) {
+        if (zooId) queryClient.removeQueries({ queryKey: ['profile', 'zoo', zooId] })
+        void queryClient.invalidateQueries({ queryKey: feedQueryOptions.queryKey })
+      }
     },
   })
 

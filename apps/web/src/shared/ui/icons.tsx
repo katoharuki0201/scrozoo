@@ -86,3 +86,7 @@ export function CalendarIcon(props: IconProps) {
 export function ClipboardListIcon(props: IconProps) {
   return <svg {...defaults} {...props}><rect x="5" y="4" width="14" height="17" rx="2" /><path d="M9 4V3h6v1M9 9h6M9 13h6M9 17h4" /></svg>
 }
+
+export function TargetIcon(props: IconProps) {
+  return <svg {...defaults} {...props}><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1" /></svg>
+}

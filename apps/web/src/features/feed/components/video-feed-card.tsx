@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router'
 import type { FeedVideo } from '../model/feed'
 import { FeedAction } from './feed-action'
 import { CheckIcon, HeartIcon, MessageIcon, PlayIcon, VolumeIcon } from '../../../shared/ui/icons'
+import { SupportGoalProgress } from '../../support-goal/components/support-goal-progress'
 
 const FREE_PREVIEW_SECONDS = 5
 
@@ -146,6 +147,11 @@ export function VideoFeedCard({
         <p className="mt-1 line-clamp-1 text-sm font-bold text-sky-300">
           {item.tags.map((tag) => `#${tag}`).join('  ')}
         </p>
+        {item.supportGoal && (
+          <div className="pointer-events-auto mt-2 w-[calc(100vw-2rem)] max-w-[398px]">
+            <SupportGoalProgress goal={item.supportGoal} variant="overlay" />
+          </div>
+        )}
         <button
           className={`pointer-events-auto mt-3 h-11 w-[calc(100vw-2rem)] max-w-[398px] rounded-xl px-4 text-sm font-bold text-white shadow-lg active:scale-[0.99] ${item.hasActiveSupportPlan ? 'border border-amber-300/70 bg-amber-400/25 backdrop-blur-md' : 'bg-gradient-to-r from-orange-400 via-rose-500 to-sky-400'}`}
           onClick={onSupport}
