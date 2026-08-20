@@ -235,9 +235,9 @@ type MockAdminCreator = {
 }
 
 const mockAdminCreators: MockAdminCreator[] = [
-  { id: 'creator-tama', zooName: '多摩動物公園', managerName: '佐藤 美咲', email: 'creator@scrozoo.jp', password: 'password123', token: MOCK_CREATOR_TOKEN, issuedAt: '2026-04-12', status: 'active', supporterCount: 38 },
-  { id: 'creator-higashiyama', zooName: '東山動植物園', managerName: '鈴木 拓海', email: 'higashiyama@scrozoo.jp', password: 'password123', token: 'mock-creator-higashiyama-token', issuedAt: '2026-05-21', status: 'active', supporterCount: 24 },
-  { id: 'creator-ueno', zooName: '上野動物園', managerName: '高橋 葵', email: 'ueno@scrozoo.jp', password: 'password123', token: 'mock-creator-ueno-token', issuedAt: '2026-06-08', status: 'active', supporterCount: 52 },
+  { id: 'creator-tama', zooName: '多摩動物公園', managerName: '佐藤 美咲', email: 'creator@scrozoo.jp', password: 'password123', token: MOCK_CREATOR_TOKEN, issuedAt: '2026-04-12', status: 'active', supporterCount: 8 },
+  { id: 'creator-higashiyama', zooName: '東山動植物園', managerName: '鈴木 拓海', email: 'higashiyama@scrozoo.jp', password: 'password123', token: 'mock-creator-higashiyama-token', issuedAt: '2026-05-21', status: 'active', supporterCount: 4 },
+  { id: 'creator-ueno', zooName: '上野動物園', managerName: '高橋 葵', email: 'ueno@scrozoo.jp', password: 'password123', token: 'mock-creator-ueno-token', issuedAt: '2026-06-08', status: 'active', supporterCount: 6 },
 ]
 
 for (const creator of mockAdminCreators) {
@@ -248,34 +248,35 @@ for (const creator of mockAdminCreators) {
 }
 
 const adminRevenueMonths = [
-  [2025, 9, 742000, 164000], [2025, 10, 781500, 178500], [2025, 11, 824000, 191000], [2025, 12, 905500, 248500],
-  [2026, 1, 938000, 227000], [2026, 2, 976500, 256500], [2026, 3, 1031000, 279000], [2026, 4, 1088500, 301500],
-  [2026, 5, 1142000, 328000], [2026, 6, 1197500, 352500], [2026, 7, 1264000, 386000], [2026, 8, 1346500, 418500],
+  [2025, 9, 1500, 600], [2025, 10, 2000, 900], [2025, 11, 2500, 1100], [2025, 12, 3000, 1800],
+  [2026, 1, 3500, 1400], [2026, 2, 4000, 1700], [2026, 3, 4500, 2100], [2026, 4, 5500, 2400],
+  [2026, 5, 6000, 3000], [2026, 6, 7000, 3500], [2026, 7, 8000, 4100], [2026, 8, 9000, 4800],
 ].map(([year, month, subscription, tips]) => {
   const gross = subscription + tips
   const platformFee = Math.round(gross * 0.1)
   return { month: `${year}-${String(month).padStart(2, '0')}`, subscription, tips, gross, platformFee, creatorPayout: gross - platformFee }
 })
 
-const adminViewerNames = ['田中 ひなた', '佐々木 凛', '伊藤 颯太', '渡辺 結衣', '山本 悠真', '小林 美月', '加藤 蓮', '吉田 彩花', '山田 陽斗', '松本 咲良', '井上 湊', '木村 結菜', '林 大翔', '清水 心春']
-const mockAdminViewers = adminViewerNames.map((name, index) => ({
+const adminFamilyNames = ['田中', '佐々木', '伊藤', '渡辺', '山本', '小林', '加藤', '吉田', '山田', '松本', '井上', '木村', '林', '清水', '斎藤']
+const adminGivenNames = ['ひなた', '凛', '颯太', '結衣', '悠真', '美月', '蓮']
+const mockAdminViewers = Array.from({ length: 105 }, (_, index) => ({
   id: `admin-viewer-${index + 1}`,
-  name,
-  email: `user${index + 1}@example.com`,
+  name: `${adminFamilyNames[index % adminFamilyNames.length]} ${adminGivenNames[Math.floor(index / adminFamilyNames.length)]}`,
+  email: `user${String(index + 1).padStart(3, '0')}@example.com`,
   role: 'viewer' as const,
-  planStatus: index % 4 === 0 ? 'free' as const : index % 7 === 0 ? 'cancel_scheduled' as const : 'active' as const,
-  status: index === 11 ? 'suspended' as const : 'active' as const,
-  registeredAt: `2026-${String(8 - Math.floor(index / 4)).padStart(2, '0')}-${String(20 - (index % 4) * 3).padStart(2, '0')}`,
+  planStatus: index >= 18 ? 'free' as const : [5, 15].includes(index) ? 'cancel_scheduled' as const : 'active' as const,
+  status: index === 93 ? 'suspended' as const : 'active' as const,
+  registeredAt: new Date(Date.UTC(2026, 7, 20 - index * 3)).toISOString().slice(0, 10),
 }))
 
-const mockAdminSubscribers = Array.from({ length: 24 }, (_, index) => ({
+const mockAdminSubscribers = Array.from({ length: 18 }, (_, index) => ({
   id: `admin-subscriber-${index + 1}`,
-  userName: adminViewerNames[index % adminViewerNames.length],
-  email: `user${(index % adminViewerNames.length) + 1}@example.com`,
-  creatorName: ['多摩動物公園', '東山動植物園', '上野動物園'][index % 3],
+  userName: mockAdminViewers[index].name,
+  email: mockAdminViewers[index].email,
+  creatorName: index < 8 ? '多摩動物公園' : index < 14 ? '上野動物園' : '東山動植物園',
   joinedAt: `2026-${String(Math.max(1, 8 - (index % 7))).padStart(2, '0')}-${String((index % 20) + 1).padStart(2, '0')}`,
   nextRenewalDate: `2026-09-${String((index % 24) + 1).padStart(2, '0')}`,
-  status: index % 9 === 0 ? 'cancel_scheduled' as const : 'active' as const,
+  status: [5, 15].includes(index) ? 'cancel_scheduled' as const : 'active' as const,
   supportedMonths: (index % 11) + 1,
 }))
 
@@ -516,8 +517,9 @@ export const handlers = [
     await delay(350)
     if (!requireAdmin(request)) return HttpResponse.json({ message: 'Unauthorized' }, { status: 401 })
     const latest = adminRevenueMonths.at(-1)!
+    const previous = adminRevenueMonths.at(-2)!
     return HttpResponse.json({
-      metrics: { totalUsers: 2846, creators: mockAdminCreators.filter((creator) => creator.status === 'active').length, activeSubscribers: 2693, monthlyGross: latest.gross, monthlyFee: latest.platformFee, userGrowthRate: 8.4, revenueGrowthRate: 7.2 },
+      metrics: { totalUsers: mockAdminViewers.length + mockAdminCreators.length, creators: mockAdminCreators.filter((creator) => creator.status === 'active').length, activeSubscribers: mockAdminSubscribers.length, monthlyGross: latest.gross, monthlyFee: latest.platformFee, userGrowthRate: 6.9, revenueGrowthRate: Math.round(((latest.gross - previous.gross) / previous.gross) * 1000) / 10 },
       monthlyRevenue: adminRevenueMonths.slice(-8),
       recentActivities: [
         { id: 'activity-1', title: '新しいプラン加入', detail: '田中 ひなたさんが多摩動物公園に加入', occurredAt: '12分前', type: 'support' },
