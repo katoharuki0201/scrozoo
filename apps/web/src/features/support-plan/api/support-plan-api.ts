@@ -15,11 +15,20 @@ export async function cancelSupportPlan(planId: string) {
 }
 
 export async function createSupportPlan(zooId: string) {
-  const checkout = mockCheckoutSchema.parse(
-    await api.post<unknown>('support-plans', { zooId }),
-  )
-  window.location.assign(checkout.checkoutUrl)
-  return new Promise<never>(() => undefined)
+  const checkoutWindow = window.open('', '_blank')
+  if (checkoutWindow) checkoutWindow.opener = null
+
+  try {
+    const checkout = mockCheckoutSchema.parse(
+      await api.post<unknown>('support-plans', { zooId }),
+    )
+    if (checkoutWindow) checkoutWindow.location.href = checkout.checkoutUrl
+    else window.open(checkout.checkoutUrl, '_blank', 'noopener,noreferrer')
+    return checkout.plan
+  } catch (error) {
+    checkoutWindow?.close()
+    throw error
+  }
 }
 
 export const supportPlansQueryOptions = queryOptions({

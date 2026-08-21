@@ -90,7 +90,7 @@ Better Auth の handler を `/api/auth/*` にマウントする。
 | `POST` | `/api/support-plans/:planId/cancel` | 必須 | DBに登録済みの契約を期間末解約予定にする |
 | `POST` | `/api/videos/:videoId/tip-checkout` | 必須 | 投げ銭内容を検証し、共通のStripeテストPayment Linkを返す |
 
-Stripe APIとWebhookは使用しない。加入・投げ銭APIは `{ checkoutUrl, mode: "mock" }` を返し、フロントは指定されたテストPayment Linkへ遷移する。遷移だけではDB状態やコメントを更新しない。サポート履歴は `GET /api/profiles/me/support-plans` の契約プラン一覧として扱う。
+Stripe APIとWebhookは使用しない。加入APIはボタン押下時に月額500円のモック契約をDBに作成し、`{ checkoutUrl, mode: "mock", plan }` を返す。フロントは指定されたテストPayment Linkを新しいタブで開く。投げ銭APIは `{ checkoutUrl, mode: "mock" }` のみを返し、コメントや金額はDBへ反映しない。サポート履歴は `GET /api/profiles/me/support-plans` の契約プラン一覧として扱う。
 
 ## 7. QR 認証・ギャラリー
 

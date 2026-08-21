@@ -84,6 +84,12 @@ export function HomePage() {
   })
   const joinMutation = useMutation({
     mutationFn: createSupportPlan,
+    onSuccess: () => {
+      setSheet(null)
+      void queryClient.invalidateQueries({ queryKey: ['feed'] })
+      void queryClient.invalidateQueries({ queryKey: ['profile', 'me', 'support-plans'] })
+      void queryClient.invalidateQueries({ queryKey: ['creator', 'supporters'] })
+    },
   })
 
   function submitSearch(event: React.FormEvent<HTMLFormElement>) {
@@ -183,14 +189,11 @@ export function HomePage() {
 
         {sheet === 'support' && (
           <FeedSheet onClose={() => setSheet(null)} title="応援プラン">
-            <div className={`mt-5 rounded-2xl p-5 ${activeVideo?.hasActiveSupportPlan ? 'border border-emerald-200 bg-emerald-50' : 'bg-orange-50'}`}>
-              <p className={`text-sm font-bold ${activeVideo?.hasActiveSupportPlan ? 'text-emerald-700' : 'text-orange-700'}`}>{activeVideo?.zoo.name}を応援</p>
+            <div className="mt-5 px-1 py-3">
+              <p className="text-lg font-black text-slate-900">{activeVideo?.zoo.name}を応援</p>
               <p className="mt-2 text-3xl font-black">
-                {activeVideo?.hasActiveSupportPlan ? '加入中' : `${activeVideo?.supportPrice}円`}
-                {!activeVideo?.hasActiveSupportPlan && <span className="text-sm font-medium text-slate-500"> / 月</span>}
+                {activeVideo?.supportPrice}円 <span className="text-sm font-medium text-slate-500">/ 月</span>
               </p>
-              <p className="mt-3 text-sm leading-6 text-slate-600">動画を最後まで視聴しながら、動物たちの暮らしを応援できます。</p>
-              {!activeVideo?.hasActiveSupportPlan && <p className="mt-2 text-xs font-bold text-rose-600">Stripeのテストページへ移動します。実際の請求は発生しません。</p>}
             </div>
             {!activeVideo?.hasActiveSupportPlan && (
               <button
@@ -199,7 +202,7 @@ export function HomePage() {
                 onClick={() => activeVideo && joinMutation.mutate(activeVideo.zoo.id)}
                 type="button"
               >
-                {joinMutation.isPending ? '移動中...' : 'テスト決済ページへ進む'}
+                {joinMutation.isPending ? '加入処理中...' : '500円で応援する'}
               </button>
             )}
             {joinMutation.isError && <p className="mt-3 text-center text-sm font-bold text-red-600" role="alert">加入手続きを完了できませんでした。</p>}

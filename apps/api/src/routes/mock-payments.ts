@@ -2,7 +2,7 @@ import { and, desc, eq, gt, inArray, isNull, or } from "drizzle-orm";
 import { Hono } from "hono";
 
 import { db } from "../db";
-import { mediaAsset, subscription, video, zoo } from "../db/schema";
+import { mediaAsset, subscription, subscriptionEvent, video, zoo } from "../db/schema";
 import { requireAuth, type AuthEnv } from "../middleware/auth";
 import { resolveMockPaymentUrl } from "../lib/mock-payment";
 
@@ -38,11 +38,27 @@ mockPayments.get("/profiles/me/support-plans", requireAuth, async (c) => {
 });
 
 mockPayments.post("/support-plans", requireAuth, async (c) => {
+  const session = c.get("session")!;
+  if (session.user.role !== "viewer") return c.json({ error: { code: "FORBIDDEN", message: "一般ユーザーのみ加入できます" } }, 403);
   const body = await c.req.json<unknown>().catch(() => null);
   const zooId = body && typeof body === "object" && "zooId" in body && typeof body.zooId === "string" ? body.zooId : "";
-  const [target] = await db.select({ id: zoo.id }).from(zoo).where(and(eq(zoo.id, zooId), eq(zoo.status, "active"))).limit(1);
+  const [target] = await db.select({ id: zoo.id, name: zoo.name, avatarObjectKey: mediaAsset.objectKey }).from(zoo).leftJoin(mediaAsset, eq(zoo.profileMediaAssetId, mediaAsset.id)).where(and(eq(zoo.id, zooId), eq(zoo.status, "active"))).limit(1);
   if (!target) return c.json({ error: { code: "NOT_FOUND", message: "動物園が見つかりません" } }, 404);
-  return c.json({ checkoutUrl: resolveMockPaymentUrl(), mode: "mock" as const });
+  const [existing] = await db.select().from(subscription).where(and(eq(subscription.userId, session.user.id), eq(subscription.zooId, zooId), inArray(subscription.status, ["active", "canceling"]))).limit(1);
+  const now = new Date();
+  const periodEnd = existing?.currentPeriodEnd ?? new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+  const subscriptionId = existing?.id ?? crypto.randomUUID();
+  if (!existing) {
+    await db.transaction(async (tx) => {
+      await tx.insert(subscription).values({ id: subscriptionId, userId: session.user.id, zooId, amount: 500, status: "active", idempotencyKey: `mock-${crypto.randomUUID()}`, currentPeriodStart: now, currentPeriodEnd: periodEnd });
+      await tx.insert(subscriptionEvent).values({ id: crypto.randomUUID(), subscriptionId, type: "started", amount: 500, periodStart: now, periodEnd, occurredAt: now });
+    });
+  }
+  return c.json({
+    checkoutUrl: resolveMockPaymentUrl(),
+    mode: "mock" as const,
+    plan: { id: subscriptionId, zoo: { id: target.id, name: target.name, avatarUrl: publicMediaUrl(target.avatarObjectKey) }, nextRenewalDate: periodEnd.toISOString().slice(0, 10), status: existing?.status === "canceling" ? "cancel_scheduled" as const : "active" as const },
+  });
 });
 
 mockPayments.post("/support-plans/:planId/cancel", requireAuth, async (c) => {

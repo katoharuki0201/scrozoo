@@ -1033,7 +1033,19 @@ export const handlers = [
     if (!zooExists) {
       return HttpResponse.json({ message: 'Not found' }, { status: 404 })
     }
-    return HttpResponse.json({ checkoutUrl: 'https://buy.stripe.com/test_7sYcN5b1wgAafpA8JwaMU00', mode: 'mock' })
+    const video = mockVideos.find((item) => item.zoo.id === result.data.zooId)!
+    let plan = mockSupportPlans.find((item) => item.zoo.id === result.data.zooId)
+    if (!plan) {
+      plan = {
+        id: `support-plan-${crypto.randomUUID()}`,
+        zoo: { id: video.zoo.id, name: video.zoo.name, avatarUrl: video.zoo.avatarUrl },
+        nextRenewalDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+        status: 'active',
+      }
+      mockSupportPlans = [plan, ...mockSupportPlans]
+      supportedZooIds.add(result.data.zooId)
+    }
+    return HttpResponse.json({ checkoutUrl: 'https://buy.stripe.com/test_7sYcN5b1wgAafpA8JwaMU00', mode: 'mock', plan })
   }),
   http.post('*/api/videos/:videoId/tip-checkout', async ({ params, request }) => {
     const account = accountByToken.get(getToken(request) ?? '')
