@@ -75,25 +75,10 @@ export function RegistrationPage() {
   const duplicateEmail = registrationError instanceof HTTPError && [409, 422].includes(registrationError.response.status)
 
   return (
-    <main className="grid min-h-svh bg-white lg:grid-cols-[minmax(0,1.05fr)_minmax(32rem,0.95fr)]">
-      <section className="relative hidden overflow-hidden bg-slate-950 p-12 text-white lg:flex lg:flex-col lg:justify-between">
-        <div className="absolute -top-32 -left-24 size-96 rounded-full bg-sky-500/20 blur-3xl" />
-        <div className="absolute right-0 bottom-0 size-[34rem] translate-x-1/3 translate-y-1/3 rounded-full bg-indigo-500/20 blur-3xl" />
-        <div className="relative flex items-center gap-3">
-          <div className="grid size-10 place-items-center rounded-xl bg-sky-500 font-bold">S</div>
-          <span className="text-xl font-bold tracking-tight">Scrozoo</span>
-        </div>
-        <div className="relative max-w-xl">
-          <p className="text-sm font-semibold tracking-[0.22em] text-sky-300 uppercase">Join Scrozoo</p>
-          <h1 className="mt-5 text-5xl leading-tight font-bold tracking-tight">動物たちの毎日を、<br />もっと近くに。</h1>
-          <p className="mt-6 max-w-lg text-base leading-8 text-slate-300">好きな動物園を応援して、ここでしか見られない瞬間を楽しみましょう。</p>
-        </div>
-        <p className="relative text-sm text-slate-500">© 2026 Scrozoo</p>
-      </section>
-
-      <section className="flex min-h-svh items-center justify-center px-6 py-10 sm:px-12">
+    <main className="mx-auto min-h-svh max-w-[430px] bg-white shadow-2xl">
+      <section className="flex min-h-svh items-center justify-center px-6 py-12">
         <div className="w-full max-w-md">
-          <div className="mb-8 flex items-center gap-3 lg:hidden">
+          <div className="mb-8 flex items-center gap-3">
             <div className="grid size-10 place-items-center rounded-xl bg-slate-950 font-bold text-white">S</div>
             <span className="text-xl font-bold tracking-tight">Scrozoo</span>
           </div>
