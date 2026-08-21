@@ -16,6 +16,16 @@ export function QrScanPage() {
   const scannerRef = useRef<QrScanner | null>(null)
   const handledRef = useRef(false)
   const [cameraError, setCameraError] = useState<string | null>(null)
+
+  async function startScanner(scanner: QrScanner, errorMessage: string) {
+    try {
+      await scanner.start()
+      if (scannerRef.current === scanner) setCameraError(null)
+    } catch {
+      if (scannerRef.current === scanner) setCameraError(errorMessage)
+    }
+  }
+
   const verification = useMutation({
     mutationFn: verifyQrCode,
     onSuccess: (session) => {
@@ -24,7 +34,12 @@ export function QrScanPage() {
     onError: () => {
       handledRef.current = false
       setCameraError('このQRコードはScrozooで使用できません。')
-      void scannerRef.current?.start().catch(() => undefined)
+      const scanner = scannerRef.current
+      if (scanner) {
+        void scanner.start().catch(() => {
+          if (scannerRef.current === scanner) setCameraError('カメラを起動できません。端末の設定を確認してください。')
+        })
+      }
     },
   })
   const verifyQrRef = useRef(verification.mutate)
@@ -61,13 +76,22 @@ export function QrScanPage() {
     )
     scannerRef.current = scanner
 
-    void scanner.start().catch(() => {
-      setCameraError('カメラを起動できません。カメラの使用を許可してください。')
-    })
+    void startScanner(scanner, 'カメラを起動できません。カメラの使用を許可してください。')
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === 'hidden') {
+        scanner.stop()
+      } else if (!handledRef.current) {
+        void startScanner(scanner, 'カメラを再開できません。端末の設定を確認してください。')
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
 
     return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      if (scannerRef.current === scanner) scannerRef.current = null
       scanner.destroy()
-      scannerRef.current = null
     }
   }, [payloadFromUrl])
 
@@ -81,9 +105,8 @@ export function QrScanPage() {
   function retryCamera() {
     handledRef.current = false
     setCameraError(null)
-    void scannerRef.current?.start().catch(() => {
-      setCameraError('カメラを起動できません。端末の設定を確認してください。')
-    })
+    const scanner = scannerRef.current
+    if (scanner) void startScanner(scanner, 'カメラを起動できません。端末の設定を確認してください。')
   }
 
   return (
