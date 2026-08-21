@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "scrozoo-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-21",
+  "compatibility_flags": ["nodejs_compat"],
+  "minify": true,
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    "NODE_ENV": "production",
+    "FRONTEND_URL": "https://scrozoo.pages.dev",
+    "TRUSTED_ORIGINS": "https://scrozoo.pages.dev",
+    "MOCK_PAYMENT_URL": "https://buy.stripe.com/test_7sYcN5b1wgAafpA8JwaMU00"
+  }
+}

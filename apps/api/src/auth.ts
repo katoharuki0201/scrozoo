@@ -11,6 +11,7 @@ const trustedOrigins = (process.env.TRUSTED_ORIGINS ?? "http://localhost:5173")
 
 const googleClientId = process.env.GOOGLE_CLIENT_ID;
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
+const isProduction = process.env.NODE_ENV === "production";
 
 export const auth = betterAuth({
   appName: "Scrozoo",
@@ -71,7 +72,10 @@ export const auth = betterAuth({
     },
   },
   advanced: {
-    useSecureCookies: process.env.NODE_ENV === "production",
+    useSecureCookies: isProduction,
+    defaultCookieAttributes: isProduction
+      ? { httpOnly: true, sameSite: "none", secure: true }
+      : undefined,
   },
   rateLimit: {
     enabled: true,
