@@ -20,6 +20,7 @@ export function ZooProfilePage() {
       void queryClient.invalidateQueries({ queryKey: ['feed'] })
       void queryClient.invalidateQueries({ queryKey: supportPlansQueryOptions.queryKey })
       void queryClient.invalidateQueries({ queryKey: ['creator', 'supporters'] })
+      void queryClient.invalidateQueries({ queryKey: ['profile', 'zoo', zooId] })
     },
   })
 

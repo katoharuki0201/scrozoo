@@ -1044,6 +1044,7 @@ export const handlers = [
       }
       mockSupportPlans = [plan, ...mockSupportPlans]
       supportedZooIds.add(result.data.zooId)
+      addSupportGoalAmount(result.data.zooId, 500)
     }
     return HttpResponse.json({ checkoutUrl: 'https://buy.stripe.com/test_7sYcN5b1wgAafpA8JwaMU00', mode: 'mock', plan })
   }),

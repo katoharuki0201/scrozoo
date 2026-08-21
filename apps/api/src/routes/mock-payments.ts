@@ -1,8 +1,8 @@
-import { and, desc, eq, gt, inArray, isNull, or } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, isNull, or, sql } from "drizzle-orm";
 import { Hono } from "hono";
 
 import { db } from "../db";
-import { mediaAsset, subscription, subscriptionEvent, video, zoo } from "../db/schema";
+import { mediaAsset, subscription, subscriptionEvent, supportGoal, video, zoo } from "../db/schema";
 import { requireAuth, type AuthEnv } from "../middleware/auth";
 import { resolveMockPaymentUrl } from "../lib/mock-payment";
 
@@ -52,6 +52,7 @@ mockPayments.post("/support-plans", requireAuth, async (c) => {
     await db.transaction(async (tx) => {
       await tx.insert(subscription).values({ id: subscriptionId, userId: session.user.id, zooId, amount: 500, status: "active", idempotencyKey: `mock-${crypto.randomUUID()}`, currentPeriodStart: now, currentPeriodEnd: periodEnd });
       await tx.insert(subscriptionEvent).values({ id: crypto.randomUUID(), subscriptionId, type: "started", amount: 500, periodStart: now, periodEnd, occurredAt: now });
+      await tx.update(supportGoal).set({ currentAmount: sql`${supportGoal.currentAmount} + 500`, updatedAt: now }).where(and(eq(supportGoal.zooId, zooId), isNull(supportGoal.archivedAt)));
     });
   }
   return c.json({
