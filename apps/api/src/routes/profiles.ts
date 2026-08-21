@@ -1,4 +1,4 @@
-import { and, count, desc, eq, inArray } from "drizzle-orm";
+import { and, count, desc, eq, inArray, isNull } from "drizzle-orm";
 import { Hono } from "hono";
 
 import { db } from "../db";
@@ -7,6 +7,7 @@ import {
   mediaAsset,
   session as sessionTable,
   subscription,
+  supportGoal,
   user,
   userProfile,
   video,
@@ -16,6 +17,7 @@ import {
   requireAuth,
   type AuthEnv,
 } from "../middleware/auth";
+import { toSupportGoalResponse } from "../lib/support-goal";
 
 const profiles = new Hono<AuthEnv>();
 
@@ -100,15 +102,22 @@ async function creatorProfile(zooId: string) {
     .where(and(eq(video.zooId, zooId), eq(video.status, "published")))
     .orderBy(desc(video.publishedAt));
 
-  const [supporterTotal] = await db
-    .select({ value: count() })
-    .from(subscription)
-    .where(
-      and(
-        eq(subscription.zooId, zooId),
-        inArray(subscription.status, ["active", "canceling"]),
+  const [[supporterTotal], [goal]] = await Promise.all([
+    db
+      .select({ value: count() })
+      .from(subscription)
+      .where(
+        and(
+          eq(subscription.zooId, zooId),
+          inArray(subscription.status, ["active", "canceling"]),
+        ),
       ),
-    );
+    db
+      .select()
+      .from(supportGoal)
+      .where(and(eq(supportGoal.zooId, zooId), isNull(supportGoal.archivedAt)))
+      .limit(1),
+  ]);
 
   return {
     id: zooRow.id,
@@ -119,7 +128,7 @@ async function creatorProfile(zooId: string) {
     videoCount: videos.length,
     supporterCount: supporterTotal?.value ?? 0,
     supportPrice: 500,
-    supportGoal: null,
+    supportGoal: goal ? toSupportGoalResponse(goal) : null,
     videos: videos.map((item) => ({
       id: item.id,
       videoId: item.id,

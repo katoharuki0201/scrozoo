@@ -138,13 +138,13 @@ MSW で実装されているフロントエンド向け API を、Hono、Better 
 
 ## P2: 応援目標
 
-- [ ] `support_goal` テーブルのスキーマとマイグレーションを追加する。
-- [ ] 1動物園につき有効な目標は1件までとする制約を追加する。
-- [ ] `GET /api/profiles/me/support-goal`
-- [ ] `PUT /api/profiles/me/support-goal`
-- [ ] `DELETE /api/profiles/me/support-goal`
+- [x] `support_goal` テーブルのスキーマとマイグレーションを追加する。
+- [x] 1動物園につき有効な目標は1件までとする制約を追加する。
+- [x] `GET /api/profiles/me/support-goal`
+- [x] `PUT /api/profiles/me/support-goal`
+- [x] `DELETE /api/profiles/me/support-goal`
 - [ ] 金額は Stripe Webhook で決済成功を確認した後だけ加算する。
-- [ ] 期限切れと達成済みのステータス判定を共通化する。
+- [x] 期限切れと達成済みのステータス判定を共通化する。
 
 ## P2: Stripe Sandbox、応援プラン、投げ銭
 

@@ -496,6 +496,39 @@ export const subscription = sqliteTable(
   ],
 );
 
+export const supportGoal = sqliteTable(
+  "support_goal",
+  {
+    id: text("id").primaryKey(),
+    zooId: text("zoo_id")
+      .notNull()
+      .references(() => zoo.id, { onDelete: "restrict" }),
+    title: text("title").notNull(),
+    targetAmount: integer("target_amount").notNull(),
+    currentAmount: integer("current_amount").default(0).notNull(),
+    deadline: text("deadline").notNull(),
+    archivedAt: integer("archived_at", { mode: "timestamp_ms" }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    uniqueIndex("support_goal_active_zoo_uidx")
+      .on(table.zooId)
+      .where(sql`${table.archivedAt} is null`),
+    index("support_goal_zoo_created_at_idx").on(table.zooId, table.createdAt),
+    check(
+      "support_goal_title_length_check",
+      sql`length(${table.title}) between 1 and 50`,
+    ),
+    check("support_goal_target_amount_check", sql`${table.targetAmount} >= 500`),
+    check("support_goal_current_amount_check", sql`${table.currentAmount} >= 0`),
+    check(
+      "support_goal_deadline_check",
+      sql`${table.deadline} glob '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'`,
+    ),
+  ],
+);
+
 export const comment = sqliteTable(
   "comment",
   {
@@ -849,6 +882,7 @@ export const zooRelations = relations(zoo, ({ one, many }) => ({
   animals: many(animal),
   videos: many(video),
   subscriptions: many(subscription),
+  supportGoals: many(supportGoal),
   tips: many(tip),
   visitQrCodes: many(visitQrCode),
   visitPermits: many(visitPermit),
@@ -935,6 +969,13 @@ export const subscriptionRelations = relations(
     events: many(subscriptionEvent),
   }),
 );
+
+export const supportGoalRelations = relations(supportGoal, ({ one }) => ({
+  zoo: one(zoo, {
+    fields: [supportGoal.zooId],
+    references: [zoo.id],
+  }),
+}));
 
 export const commentRelations = relations(comment, ({ one }) => ({
   video: one(video, {
