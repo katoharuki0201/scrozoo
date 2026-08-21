@@ -1,9 +1,10 @@
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { Hono } from "hono";
 
+import { getApiEnv } from "../config/env";
 import { db } from "../db";
 import { animal, subscription, user, video, visitQrCode, zoo } from "../db/schema";
-import { sha256 } from "../lib/token";
+import { createVisitQrToken, sha256 } from "../lib/token";
 import { requirePublisher, type AuthEnv } from "../middleware/auth";
 
 const publisher = new Hono<AuthEnv>();
@@ -101,10 +102,20 @@ publisher.get("/creator/supporters", async (c) => {
 publisher.get("/publisher/visit-qr", async (c) => {
   const owner = await ownedZoo(c.get("session")!.user.id);
   if (!owner) return c.json({ error: { code: "NOT_FOUND", message: "動物園が見つかりません" } }, 404);
-  const payload = `scrozoo:visit:${crypto.randomUUID()}:${crypto.randomUUID()}`;
-  const id = crypto.randomUUID();
-  await db.insert(visitQrCode).values({ id, zooId: owner.id, tokenHash: await sha256(payload), status: "active", expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) });
-  return c.json({ payload, expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), zoo: { id: owner.id, name: owner.name } }, 201);
+  const env = getApiEnv();
+  const token = await createVisitQrToken(owner.id, env.BETTER_AUTH_SECRET);
+  const tokenHash = await sha256(token);
+  const [existing] = await db.select({ id: visitQrCode.id }).from(visitQrCode).where(eq(visitQrCode.tokenHash, tokenHash)).limit(1);
+
+  if (!existing) {
+    await db.insert(visitQrCode)
+      .values({ id: crypto.randomUUID(), zooId: owner.id, tokenHash, status: "active", expiresAt: null })
+      .onConflictDoNothing({ target: visitQrCode.tokenHash });
+  }
+
+  const payload = new URL("/scan", env.FRONTEND_URL);
+  payload.searchParams.set("payload", token);
+  return c.json({ payload: payload.toString(), expiresAt: null, zoo: { id: owner.id, name: owner.name } });
 });
 
 function initials(name: string) { return name.split(/[\s_]+/).slice(0, 2).map((part) => part[0]?.toUpperCase() ?? "").join(""); }

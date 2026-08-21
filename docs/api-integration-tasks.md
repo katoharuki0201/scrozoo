@@ -121,11 +121,13 @@ MSW で実装されているフロントエンド向け API を、Hono、Better 
 - [x] `DELETE /api/publisher/videos/:videoId`
 - [x] `GET /api/creator/supporters`（既存フロント契約）
 - [x] `GET /api/publisher/visit-qr`
+  - 自身の動物園に固定された無期限 QR を返し、再取得時も同じ URL とする
+  - 失効・再生成は MVP では実装しない
 - [x] 現行フロントの `POST /api/creator/posts` を新しいアップロードフローへ置き換える。
 
 ## P1: QR 認証とギャラリー
 
-- [x] QR トークンは暗号学的乱数で生成し、発行QRは24時間、検証後の投稿権限は2時間有効とする。
+- [x] QR トークンはサーバー秘密鍵による推測困難な署名値とし、発行 QR は無期限、検証後の投稿権限は2時間有効とする。
 - [x] DB に保存するのは QR トークン本文ではなく SHA-256 ハッシュにする。
 - [x] `POST /api/qr/verify`
 - [x] `GET /api/qr/sessions/:sessionId`

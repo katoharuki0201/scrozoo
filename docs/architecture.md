@@ -99,7 +99,8 @@ bun run dev
 ## QR コード
 
 - QR には HTTPS の来園認証 URL を埋め込み、端末標準カメラとアプリ内カメラの両方から開けるようにする。
-- 生成は `qrcode`、ブラウザ内読み取りは `BarcodeDetector` と `@zxing/browser` のフォールバックを候補とする。
+- 投稿者画面では `qrcode` で無期限の来園認証 URL を描画し、PNG 保存を提供する。
+- ブラウザ内読み取りには `qr-scanner` を使用する。
 
 ## 無料枠でのデプロイ
 

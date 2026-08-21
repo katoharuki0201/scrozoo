@@ -3,7 +3,7 @@ import { Hono } from "hono";
 
 import { db } from "../db";
 import { galleryPost, mediaAsset, visitPermit, visitQrCode, zoo } from "../db/schema";
-import { sha256 } from "../lib/token";
+import { sha256, visitQrTokenFromPayload } from "../lib/token";
 import { requireAuth, type AuthEnv } from "../middleware/auth";
 
 const visits = new Hono<AuthEnv>();
@@ -13,7 +13,7 @@ visits.post("/qr/verify", requireAuth, async (c) => {
   const body = await c.req.json<unknown>().catch(() => null);
   const payload = body && typeof body === "object" && "payload" in body && typeof body.payload === "string" ? body.payload.trim() : "";
   if (!payload) return c.json({ error: { code: "VALIDATION_ERROR", message: "QRコードを確認してください" } }, 422);
-  const tokenHash = await sha256(payload);
+  const tokenHash = await sha256(visitQrTokenFromPayload(payload));
   const now = new Date();
   const [qr] = await db.select({ id: visitQrCode.id, zooId: zoo.id, zooName: zoo.name, expiresAt: visitQrCode.expiresAt })
     .from(visitQrCode).innerJoin(zoo, eq(visitQrCode.zooId, zoo.id))

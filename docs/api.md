@@ -134,6 +134,8 @@ Better Auth の handler を `/api/auth/*` にマウントする。
 | `GET` | `/api/publisher/supporters` | プラン加入者と投げ銭利用者 |
 | `GET` | `/api/publisher/visit-qr` | 来園認証 URL と QR 表示用情報 |
 
+`GET /api/publisher/visit-qr` は自身の動物園に固定された無期限の `payload`、`expiresAt: null`、動物園情報を返す。未発行の場合のみ作成し、再取得では同じ `payload` を返す。
+
 ## 10. 運用確認
 
 | メソッド | パス | 用途 |

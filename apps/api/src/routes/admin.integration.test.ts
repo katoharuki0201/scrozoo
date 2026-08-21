@@ -83,6 +83,30 @@ describe("admin API", () => {
     expect(creatorLoginBeforeSuspension.status).toBe(200);
     const activeCreatorCookie = creatorLoginBeforeSuspension.headers.get("set-cookie")!;
 
+    const firstQrResponse = await app.request("http://localhost:3000/api/publisher/visit-qr", {
+      headers: { Origin: "http://localhost:5173", Cookie: activeCreatorCookie },
+    });
+    expect(firstQrResponse.status).toBe(200);
+    const firstQr = await firstQrResponse.json() as { payload: string; expiresAt: null; zoo: { name: string } };
+    expect(firstQr.expiresAt).toBeNull();
+    expect(firstQr.zoo.name).toBe("Test Zoo");
+    expect(firstQr.payload).toStartWith("http://localhost:5173/scan?payload=");
+
+    const secondQrResponse = await app.request("http://localhost:3000/api/publisher/visit-qr", {
+      headers: { Origin: "http://localhost:5173", Cookie: activeCreatorCookie },
+    });
+    expect(secondQrResponse.status).toBe(200);
+    expect((await secondQrResponse.json() as { payload: string }).payload).toBe(firstQr.payload);
+    const qrCount = await client.execute("select count(*) as count from visit_qr_code");
+    expect(Number(qrCount.rows[0]!.count)).toBe(1);
+
+    const verifiedQr = await app.request("http://localhost:3000/api/qr/verify", {
+      method: "POST",
+      headers: { ...jsonHeaders, Cookie: cookie! },
+      body: JSON.stringify({ payload: firstQr.payload }),
+    });
+    expect(verifiedQr.status).toBe(201);
+
     const suspended = await app.request(`http://localhost:3000/api/admin/creators/${createdBody.creator.id}/status`, {
       method: "PATCH",
       headers: { ...jsonHeaders, Cookie: cookie! },
