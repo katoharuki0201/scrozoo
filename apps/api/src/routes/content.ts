@@ -1,4 +1,4 @@
-import { and, count, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/sqlite-core";
 import { Hono } from "hono";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
@@ -11,6 +11,7 @@ import {
   favorite,
   mediaAsset,
   subscription,
+  supportGoal,
   tag,
   tip,
   user,
@@ -21,6 +22,7 @@ import {
 import { requireAuth, type AuthEnv } from "../middleware/auth";
 import { getApiEnv } from "../config/env";
 import { getR2Client } from "../lib/r2";
+import { toSupportGoalResponse } from "../lib/support-goal";
 
 const content = new Hono<AuthEnv>();
 
@@ -86,12 +88,13 @@ async function feedRows(currentUserId?: string, options: FeedOptions = {}) {
   const zooIds = [...new Set(pageRows.map((row) => row.zooId))];
   if (videoIds.length === 0) return [];
 
-  const [allTags, likeTotals, commentTotals, likedRows, supportedRows] = await Promise.all([
+  const [allTags, likeTotals, commentTotals, likedRows, supportedRows, supportGoalRows] = await Promise.all([
     db.select({ videoId: videoTag.videoId, name: tag.name }).from(videoTag).innerJoin(tag, eq(videoTag.tagId, tag.id)).where(inArray(videoTag.videoId, videoIds)),
     db.select({ videoId: favorite.videoId, value: count() }).from(favorite).where(inArray(favorite.videoId, videoIds)).groupBy(favorite.videoId),
     db.select({ videoId: comment.videoId, value: count() }).from(comment).where(inArray(comment.videoId, videoIds)).groupBy(comment.videoId),
     currentUserId ? db.select({ videoId: favorite.videoId }).from(favorite).where(and(eq(favorite.userId, currentUserId), inArray(favorite.videoId, videoIds))) : Promise.resolve([]),
     currentUserId && zooIds.length ? db.select({ zooId: subscription.zooId }).from(subscription).where(and(eq(subscription.userId, currentUserId), inArray(subscription.zooId, zooIds), inArray(subscription.status, ["active", "canceling"]))) : Promise.resolve([]),
+    zooIds.length ? db.select().from(supportGoal).where(and(inArray(supportGoal.zooId, zooIds), isNull(supportGoal.archivedAt))) : Promise.resolve([]),
   ]);
   const tagsByVideo = new Map<string, string[]>();
   for (const item of allTags) tagsByVideo.set(item.videoId, [...(tagsByVideo.get(item.videoId) ?? []), item.name]);
@@ -99,6 +102,7 @@ async function feedRows(currentUserId?: string, options: FeedOptions = {}) {
   const commentsByVideo = new Map(commentTotals.map((item) => [item.videoId, item.value]));
   const likedIds = new Set(likedRows.map((item) => item.videoId));
   const supportedZooIds = new Set(supportedRows.map((item) => item.zooId));
+  const supportGoalsByZoo = new Map(supportGoalRows.map((item) => [item.zooId, toSupportGoalResponse(item)]));
 
   return Promise.all(pageRows.map(async (row) => {
     const supported = supportedZooIds.has(row.zooId);
@@ -121,7 +125,7 @@ async function feedRows(currentUserId?: string, options: FeedOptions = {}) {
       commentCount: commentsByVideo.get(row.id) ?? 0,
       supportPrice: 500,
       hasActiveSupportPlan: supported,
-      supportGoal: null,
+      supportGoal: supportGoalsByZoo.get(row.zooId) ?? null,
       isLiked: likedIds.has(row.id),
       viewCount: row.viewCount,
       thumbnailTime: row.thumbnailTime,
