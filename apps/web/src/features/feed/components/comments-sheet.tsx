@@ -66,13 +66,15 @@ function CommentCard({ comment }: { comment: FeedComment }) {
       }`}
     >
       <div
-        className={`grid size-10 shrink-0 place-items-center rounded-full text-xs font-black ${
+        className={`grid size-10 shrink-0 place-items-center overflow-hidden rounded-full text-xs font-black ${
           comment.isSupporter
             ? 'bg-gradient-to-br from-amber-400 to-orange-500 text-white'
             : 'bg-slate-200 text-slate-600'
         }`}
       >
-        {comment.author.initials}
+        {comment.author.avatarUrl ? (
+          <img alt="" className="size-full object-cover" src={comment.author.avatarUrl} />
+        ) : comment.author.initials}
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-sm font-bold">{comment.author.name}</p>

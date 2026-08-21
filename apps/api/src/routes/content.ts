@@ -208,6 +208,7 @@ content.get("/feed/:videoId/comments", async (c) => {
     .select({
       id: comment.id,
       authorName: user.name,
+      authorAvatarUrl: user.image,
       message: comment.body,
       isSupporter: comment.supporterAtPosting,
       tipAmount: tip.amount,
@@ -221,7 +222,7 @@ content.get("/feed/:videoId/comments", async (c) => {
 
   return c.json(rows.map((row) => ({
     id: row.id,
-    author: { name: row.authorName, initials: initials(row.authorName) },
+    author: { name: row.authorName, initials: initials(row.authorName), avatarUrl: row.authorAvatarUrl },
     message: row.message,
     isSupporter: row.isSupporter,
     tipAmount: row.tipAmount ?? 0,
@@ -259,7 +260,7 @@ content.post("/feed/:videoId/comments", requireAuth, async (c) => {
 
   return c.json({
     id: created.id,
-    author: { name: session.user.name, initials: initials(session.user.name) },
+    author: { name: session.user.name, initials: initials(session.user.name), avatarUrl: session.user.image ?? null },
     message,
     isSupporter: created.supporterAtPosting,
     tipAmount: 0,

@@ -1057,7 +1057,7 @@ export const handlers = [
     if (!result.success || !video) return HttpResponse.json({ message: 'Invalid tip' }, { status: 422 })
     const comment = {
       id: crypto.randomUUID(),
-      author: { name: account.name, initials: account.name.split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase() },
+      author: { name: account.name, initials: account.name.split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase(), avatarUrl: null },
       message: result.data.comment,
       isSupporter: true,
       tipAmount: result.data.amount,
@@ -1338,7 +1338,7 @@ export const handlers = [
     const video = mockVideos.find((item) => item.id === videoId)
     const comment = {
       id: crypto.randomUUID(),
-      author: { name: 'Google User', initials: 'GU' },
+      author: { name: 'Google User', initials: 'GU', avatarUrl: null },
       message: result.data.message,
       isSupporter: video ? supportedZooIds.has(video.zoo.id) : false,
       tipAmount: result.data.tipAmount,

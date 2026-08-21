@@ -28,6 +28,7 @@ export const feedCommentSchema = z.object({
   author: z.object({
     name: z.string(),
     initials: z.string(),
+    avatarUrl: z.string().nullable().optional(),
   }),
   message: z.string(),
   isSupporter: z.boolean(),

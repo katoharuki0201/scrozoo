@@ -97,7 +97,7 @@ mockPayments.post("/videos/:videoId/tip-checkout", requireAuth, async (c) => {
   return c.json({
     checkoutUrl: resolveMockPaymentUrl(),
     mode: "mock" as const,
-    comment: { id: commentId, author: { name: session.user.name, initials: initials(session.user.name) }, message: commentText, isSupporter: true, tipAmount: amount, createdAt: now.toISOString() },
+    comment: { id: commentId, author: { name: session.user.name, initials: initials(session.user.name), avatarUrl: session.user.image ?? null }, message: commentText, isSupporter: true, tipAmount: amount, createdAt: now.toISOString() },
   });
 });
 
