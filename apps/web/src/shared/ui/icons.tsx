@@ -95,6 +95,10 @@ export function UploadIcon(props: IconProps) {
   return <svg {...defaults} {...props}><path d="M12 16V4m0 0L7 9m5-5 5 5" /><path d="M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5" /></svg>
 }
 
+export function DownloadIcon(props: IconProps) {
+  return <svg {...defaults} {...props}><path d="M12 4v12m0 0 5-5m-5 5-5-5" /><path d="M5 20h14" /></svg>
+}
+
 export function TrashIcon(props: IconProps) {
   return <svg {...defaults} {...props}><path d="M4 7h16M9 7V4h6v3m3 0-1 14H7L6 7m4 4v6m4-6v6" /></svg>
 }

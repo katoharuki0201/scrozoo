@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query'
 import QrScanner from 'qr-scanner'
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
 import { verifyQrCode } from '../features/qr/api/qr-api'
 import { BottomNavigation } from '../shared/ui/bottom-navigation'
 import { QrCodeIcon } from '../shared/ui/icons'
@@ -10,6 +10,8 @@ const DEMO_QR_PAYLOAD = 'scrozoo:visit:higashiyama:demo-2026'
 
 export function QrScanPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const payloadFromUrl = searchParams.get('payload')
   const videoRef = useRef<HTMLVideoElement>(null)
   const scannerRef = useRef<QrScanner | null>(null)
   const handledRef = useRef(false)
@@ -32,6 +34,12 @@ export function QrScanPage() {
   }, [verification.mutate])
 
   useEffect(() => {
+    if (payloadFromUrl) {
+      handledRef.current = true
+      verifyQrRef.current(payloadFromUrl)
+      return
+    }
+
     const video = videoRef.current
     if (!video) return
 
@@ -61,7 +69,7 @@ export function QrScanPage() {
       scanner.destroy()
       scannerRef.current = null
     }
-  }, [])
+  }, [payloadFromUrl])
 
   function scanDemoQr() {
     handledRef.current = true

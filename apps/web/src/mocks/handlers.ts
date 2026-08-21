@@ -495,6 +495,14 @@ const qrVisitSessions = new Map<
   }
 >()
 
+const mockCreatorVisitQrToken = 'scrozoo:visit:tama:permanent-demo'
+
+function mockCreatorVisitQrPayload() {
+  const url = new URL('/scan', location.origin)
+  url.searchParams.set('payload', mockCreatorVisitQrToken)
+  return url.toString()
+}
+
 export const handlers = [
   http.post('*/api/uploads', async ({ request }) => {
     const body = z.object({
@@ -776,15 +784,23 @@ export const handlers = [
       return HttpResponse.json({ message: 'Unauthorized' }, { status: 401 })
     }
 
-    if (!result.success || result.data.payload !== 'scrozoo:visit:higashiyama:demo-2026') {
+    const isDemoQr = result.success && result.data.payload === 'scrozoo:visit:higashiyama:demo-2026'
+    const isCreatorQr = result.success && (
+      result.data.payload === mockCreatorVisitQrToken
+      || result.data.payload === mockCreatorVisitQrPayload()
+    )
+
+    if (!isDemoQr && !isCreatorQr) {
       return HttpResponse.json({ message: 'Invalid QR code' }, { status: 400 })
     }
 
     const sessionId = crypto.randomUUID()
     const session = {
       sessionId,
-      zoo: { id: 'higashiyama', name: '東山動植物園' },
-      expiresAt: new Date(Date.now() + 30 * 60_000).toISOString(),
+      zoo: isCreatorQr
+        ? { id: 'tama', name: '多摩動物公園' }
+        : { id: 'higashiyama', name: '東山動植物園' },
+      expiresAt: new Date(Date.now() + 2 * 60 * 60_000).toISOString(),
       used: false,
     }
     qrVisitSessions.set(sessionId, session)
@@ -793,6 +809,20 @@ export const handlers = [
       sessionId: session.sessionId,
       zoo: session.zoo,
       expiresAt: session.expiresAt,
+    })
+  }),
+  http.get('*/api/publisher/visit-qr', async ({ request }) => {
+    await delay(350)
+
+    const account = accountByToken.get(getToken(request) ?? '')
+    if (account?.role !== 'creator') {
+      return HttpResponse.json({ message: 'Forbidden' }, { status: 403 })
+    }
+
+    return HttpResponse.json({
+      payload: mockCreatorVisitQrPayload(),
+      expiresAt: null,
+      zoo: { id: 'tama', name: account.name },
     })
   }),
   http.get('*/api/qr/sessions/:sessionId', async ({ params, request }) => {

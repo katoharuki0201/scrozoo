@@ -19,6 +19,7 @@ import { SupportGoalManagementPage } from './pages/support-goal-management-page'
 import { CreatorPostCreationPage } from './pages/creator-post-creation-page'
 import { CreatorSupportersPage } from './pages/creator-supporters-page'
 import { CreatorVideoPage } from './pages/creator-video-page'
+import { CreatorVisitQrPage } from './pages/creator-visit-qr-page'
 import { AdminGuestRoute } from './features/admin/components/admin-guest-route'
 import { AdminProtectedRoute } from './features/admin/components/admin-protected-route'
 import { AdminLayout } from './features/admin/components/admin-layout'
@@ -70,6 +71,7 @@ function App() {
           <Route path="/mypage/posts/new" element={<CreatorPostCreationPage />} />
           <Route path="/mypage/videos/:videoId" element={<CreatorVideoPage />} />
           <Route path="/mypage/supporters" element={<CreatorSupportersPage />} />
+          <Route path="/mypage/visit-qr" element={<CreatorVisitQrPage />} />
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />
