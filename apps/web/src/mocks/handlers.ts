@@ -961,31 +961,16 @@ export const handlers = [
       return HttpResponse.json({ message: 'Invalid zoo' }, { status: 400 })
     }
 
-    const zoo = mockVideos.find((video) => video.zoo.id === result.data.zooId)?.zoo
-
-    if (!zoo) {
+    const zooExists = mockVideos.some((video) => video.zoo.id === result.data.zooId)
+    if (!zooExists) {
       return HttpResponse.json({ message: 'Not found' }, { status: 404 })
     }
-
-    const existingPlan = mockSupportPlans.find((plan) => plan.zoo.id === zoo.id)
-
-    if (existingPlan) {
-      return HttpResponse.json(existingPlan)
-    }
-
-    const renewalDate = new Date()
-    renewalDate.setMonth(renewalDate.getMonth() + 1)
-    const plan = {
-      id: `support-plan-${zoo.id}`,
-      zoo,
-      nextRenewalDate: renewalDate.toISOString().slice(0, 10),
-      status: 'active' as const,
-    }
-    supportedZooIds.add(zoo.id)
-    mockSupportPlans.push(plan)
-    addSupportGoalAmount(zoo.id, 500)
-
-    return HttpResponse.json(plan, { status: 201 })
+    return HttpResponse.json({ checkoutUrl: 'https://buy.stripe.com/test_7sYcN5b1wgAafpA8JwaMU00', mode: 'mock' })
+  }),
+  http.post('*/api/videos/:videoId/tip-checkout', async ({ params, request }) => {
+    const result = z.object({ amount: z.union([z.literal(100), z.literal(300), z.literal(500)]), comment: z.string().trim().min(1).max(200) }).safeParse(await request.json())
+    if (!result.success || !mockVideos.some((video) => video.id === String(params.videoId))) return HttpResponse.json({ message: 'Invalid tip' }, { status: 422 })
+    return HttpResponse.json({ checkoutUrl: 'https://buy.stripe.com/test_7sYcN5b1wgAafpA8JwaMU00', mode: 'mock' })
   }),
   http.post('*/api/support-plans/:planId/cancel', async ({ params, request }) => {
     await delay(500)

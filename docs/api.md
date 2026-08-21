@@ -86,14 +86,14 @@ Better Auth の handler を `/api/auth/*` にマウントする。
 
 | メソッド | パス | 認証 | 用途 |
 | --- | --- | --- | --- |
-| `POST` | `/api/zoos/:zooId/subscription-checkout` | 必須 | 月額プラン用 Stripe Checkout Session を作成 |
-| `GET` | `/api/me/subscriptions` | 必須 | 加入中・解約予定のプラン一覧 |
-| `POST` | `/api/subscriptions/:subscriptionId/cancel` | 必須 | 期間末での解約を予約 |
-| `POST` | `/api/videos/:videoId/tip-checkout` | 必須 | 投げ銭コメントと Checkout Session を作成 |
+| `POST` | `/api/support-plans` | 必須 | 動物園を検証し、共通のStripeテストPayment Linkを返す |
+| `GET` | `/api/profiles/me/support-plans` | 必須 | DBに登録済みの加入中・解約予定プラン一覧 |
+| `POST` | `/api/support-plans/:planId/cancel` | 必須 | DBに登録済みの契約を期間末解約予定にする |
+| `POST` | `/api/videos/:videoId/tip-checkout` | 必須 | 投げ銭内容を検証し、共通のStripeテストPayment Linkを返す |
 | `GET` | `/api/me/support-logs` | 必須 | 月額加入と投げ銭履歴 |
 | `POST` | `/api/webhooks/stripe` | Stripe | Webhook を検証し、決済状態と権限を反映 |
 
-投げ銭 API は `amount`（100〜3,000）と `comment` を受け取り、Webhook 成功後にコメントを公開する。Stripe Sandbox のみ使用する。
+今回のモックではStripe APIとWebhookを使用しない。加入・投げ銭APIは `{ checkoutUrl, mode: "mock" }` を返し、フロントは指定されたテストPayment Linkへ遷移する。遷移だけではDB状態やコメントを更新しない。
 
 ## 7. QR 認証・ギャラリー
 

@@ -13,4 +13,9 @@ export const supportPlanSchema = z.object({
 
 export const supportPlansSchema = z.array(supportPlanSchema)
 
+export const mockCheckoutSchema = z.object({
+  checkoutUrl: z.url(),
+  mode: z.literal('mock'),
+})
+
 export type SupportPlan = z.infer<typeof supportPlanSchema>

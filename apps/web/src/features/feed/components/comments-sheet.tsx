@@ -194,6 +194,7 @@ export function CommentsSheet({
               ))}
             </div>
           </div>
+          <p className="mt-3 text-xs font-bold leading-5 text-rose-600">Stripeのテストページへ移動します。実際の請求やコメント確定は行われません。</p>
           <label className="mt-4 block text-xs font-bold text-slate-600" htmlFor="superchat-message">
             応援コメント
           </label>
@@ -215,7 +216,7 @@ export function CommentsSheet({
             disabled={createComment.isPending}
             type="submit"
           >
-            {createComment.isPending ? '送信中...' : `${selectedTip}円のスパチャを送る`}
+            {createComment.isPending ? '移動中...' : `${selectedTip}円のテスト決済へ進む`}
           </button>
         </form>
       ) : (

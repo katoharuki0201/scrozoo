@@ -148,18 +148,13 @@ MSW で実装されているフロントエンド向け API を、Hono、Better 
 
 ## P2: Stripe Sandbox、応援プラン、投げ銭
 
-- [ ] Stripe Sandbox キーと Webhook Secret を API 環境変数に設定する。
-- [ ] `POST /api/support-plans`または`POST /api/zoos/:zooId/subscription-checkout`
-- [ ] `GET /api/profiles/me/support-plans`または`GET /api/me/subscriptions`
-- [ ] `POST /api/support-plans/:planId/cancel`または`POST /api/subscriptions/:subscriptionId/cancel`
-- [ ] `POST /api/videos/:videoId/tip-checkout`
-- [ ] `POST /api/webhooks/stripe`
-  - 署名を検証
-  - `stripe_webhook_event.id` で重複実行を防止
-  - 成功時だけ subscription、tip、comment、support goal を反映
-- [ ] 現在 `501` を返す投げ銭付きコメントを Checkout フローに置き換える。
-- [ ] `Idempotency-Key` を必須化し、同じ決済リクエストの二重実行を防止する。
-- [ ] 決済キャンセル・失敗・Webhook 遅延を UI で扱う。
+- [x] 今回はStripe SDK・Webhookを実装せず、指定されたStripeテストPayment Linkを共通利用する。
+- [x] `POST /api/support-plans`で対象動物園を検証し、モック決済URLを返す。
+- [x] `GET /api/profiles/me/support-plans`でDB上の加入中・解約予定プランを返す。
+- [x] `POST /api/support-plans/:planId/cancel`でDB上の契約を期間末解約予定にする。
+- [x] `POST /api/videos/:videoId/tip-checkout`で金額・コメント・動画を検証し、モック決済URLを返す。
+- [x] プラン加入と投げ銭のフロントをStripeテストページへの遷移に変更する。
+- [x] 実際の請求、決済完了の検証、契約・投げ銭・コメント・応援目標への自動反映は行わないことをUIに表示する。
 
 ## P2: 管理画面 API
 

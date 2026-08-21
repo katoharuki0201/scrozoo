@@ -1,6 +1,6 @@
 import { queryOptions } from '@tanstack/react-query'
 import { api } from '../../../shared/lib/api'
-import { supportPlanSchema, supportPlansSchema } from '../model/support-plan'
+import { mockCheckoutSchema, supportPlanSchema, supportPlansSchema } from '../model/support-plan'
 
 export async function getSupportPlans() {
   return supportPlansSchema.parse(
@@ -15,9 +15,11 @@ export async function cancelSupportPlan(planId: string) {
 }
 
 export async function createSupportPlan(zooId: string) {
-  return supportPlanSchema.parse(
+  const checkout = mockCheckoutSchema.parse(
     await api.post<unknown>('support-plans', { zooId }),
   )
+  window.location.assign(checkout.checkoutUrl)
+  return new Promise<never>(() => undefined)
 }
 
 export const supportPlansQueryOptions = queryOptions({

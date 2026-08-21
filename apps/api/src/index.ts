@@ -14,6 +14,7 @@ import { publisher } from './routes/publisher'
 import { visits } from './routes/visits'
 import { supportGoals } from './routes/support-goals'
 import { admin } from './routes/admin'
+import { mockPayments } from './routes/mock-payments'
 
 getApiEnv()
 
@@ -50,6 +51,7 @@ app.route('/api', publisher)
 app.route('/api', visits)
 app.route('/api', supportGoals)
 app.route('/api', admin)
+app.route('/api', mockPayments)
 
 app.get('/', (c) => {
   return c.text('Scrozoo API')

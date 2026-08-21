@@ -9,8 +9,7 @@ import type { FeedVideo } from '../features/feed/model/feed'
 import { useAuth } from '../features/auth/hooks/use-auth'
 import { BottomNavigation } from '../shared/ui/bottom-navigation'
 import { SearchIcon } from '../shared/ui/icons'
-import { createSupportPlan, supportPlansQueryOptions } from '../features/support-plan/api/support-plan-api'
-import type { SupportPlan } from '../features/support-plan/model/support-plan'
+import { createSupportPlan } from '../features/support-plan/api/support-plan-api'
 
 export function HomePage() {
   const navigate = useNavigate()
@@ -85,32 +84,6 @@ export function HomePage() {
   })
   const joinMutation = useMutation({
     mutationFn: createSupportPlan,
-    onSuccess: (plan) => {
-      queryClient.setQueryData<SupportPlan[]>(
-        supportPlansQueryOptions.queryKey,
-        (plans) => plans?.some((item) => item.id === plan.id)
-          ? plans
-          : [...(plans ?? []), plan],
-      )
-      queryClient.setQueryData<FeedVideo[]>(feedQueryOptions.queryKey, (videos) =>
-        videos?.map((video) => {
-          if (video.zoo.id !== plan.zoo.id) return video
-
-          const supportGoal = video.supportGoal && video.supportGoal.status !== 'expired'
-            ? {
-                ...video.supportGoal,
-                currentAmount: video.supportGoal.currentAmount + 500,
-                status: video.supportGoal.currentAmount + 500 >= video.supportGoal.targetAmount
-                  ? 'achieved' as const
-                  : video.supportGoal.status,
-              }
-            : video.supportGoal
-
-          return { ...video, hasActiveSupportPlan: true, supportGoal }
-        }),
-      )
-      queryClient.removeQueries({ queryKey: ['profile', 'zoo', plan.zoo.id] })
-    },
   })
 
   function submitSearch(event: React.FormEvent<HTMLFormElement>) {
@@ -200,6 +173,7 @@ export function HomePage() {
                 {!activeVideo?.hasActiveSupportPlan && <span className="text-sm font-medium text-slate-500"> / 月</span>}
               </p>
               <p className="mt-3 text-sm leading-6 text-slate-600">動画を最後まで視聴しながら、動物たちの暮らしを応援できます。</p>
+              {!activeVideo?.hasActiveSupportPlan && <p className="mt-2 text-xs font-bold text-rose-600">Stripeのテストページへ移動します。実際の請求は発生しません。</p>}
             </div>
             {!activeVideo?.hasActiveSupportPlan && (
               <button
@@ -208,15 +182,8 @@ export function HomePage() {
                 onClick={() => activeVideo && joinMutation.mutate(activeVideo.zoo.id)}
                 type="button"
               >
-                {joinMutation.isPending ? '加入手続き中...' : '応援プランに参加する'}
+                {joinMutation.isPending ? '移動中...' : 'テスト決済ページへ進む'}
               </button>
-            )}
-            {joinMutation.isSuccess && (
-              <p className="mt-4 rounded-xl bg-emerald-50 px-4 py-3 text-center text-sm font-bold text-emerald-700" role="status">
-                {activeVideo?.supportGoal && activeVideo.supportGoal.status !== 'expired'
-                  ? 'プランに加入し、応援目標に500円追加されました。'
-                  : '応援プランに加入しました。'}
-              </p>
             )}
             {joinMutation.isError && <p className="mt-3 text-center text-sm font-bold text-red-600" role="alert">加入手続きを完了できませんでした。</p>}
           </FeedSheet>

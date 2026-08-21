@@ -1,0 +1,69 @@
+import { and, desc, eq, inArray } from "drizzle-orm";
+import { Hono } from "hono";
+
+import { db } from "../db";
+import { mediaAsset, subscription, video, zoo } from "../db/schema";
+import { requireAuth, type AuthEnv } from "../middleware/auth";
+import { resolveMockPaymentUrl } from "../lib/mock-payment";
+
+const mockPayments = new Hono<AuthEnv>();
+
+function publicMediaUrl(objectKey: string | null) {
+  if (!objectKey) return "/icon.jpg";
+  return `${process.env.MEDIA_PUBLIC_BASE_URL?.replace(/\/+$/, "") ?? ""}/${objectKey}`;
+}
+
+mockPayments.get("/profiles/me/support-plans", requireAuth, async (c) => {
+  const session = c.get("session")!;
+  const rows = await db.select({
+    id: subscription.id,
+    status: subscription.status,
+    currentPeriodEnd: subscription.currentPeriodEnd,
+    createdAt: subscription.createdAt,
+    zooId: zoo.id,
+    zooName: zoo.name,
+    avatarObjectKey: mediaAsset.objectKey,
+  }).from(subscription)
+    .innerJoin(zoo, eq(subscription.zooId, zoo.id))
+    .leftJoin(mediaAsset, eq(zoo.profileMediaAssetId, mediaAsset.id))
+    .where(and(eq(subscription.userId, session.user.id), inArray(subscription.status, ["active", "canceling"])))
+    .orderBy(desc(subscription.createdAt));
+
+  return c.json(rows.map((row) => ({
+    id: row.id,
+    zoo: { id: row.zooId, name: row.zooName, avatarUrl: publicMediaUrl(row.avatarObjectKey) },
+    nextRenewalDate: (row.currentPeriodEnd ?? new Date(row.createdAt.getTime() + 30 * 24 * 60 * 60 * 1000)).toISOString().slice(0, 10),
+    status: row.status === "canceling" ? "cancel_scheduled" as const : "active" as const,
+  })));
+});
+
+mockPayments.post("/support-plans", requireAuth, async (c) => {
+  const body = await c.req.json<unknown>().catch(() => null);
+  const zooId = body && typeof body === "object" && "zooId" in body && typeof body.zooId === "string" ? body.zooId : "";
+  const [target] = await db.select({ id: zoo.id }).from(zoo).where(and(eq(zoo.id, zooId), eq(zoo.status, "active"))).limit(1);
+  if (!target) return c.json({ error: { code: "NOT_FOUND", message: "動物園が見つかりません" } }, 404);
+  return c.json({ checkoutUrl: resolveMockPaymentUrl(), mode: "mock" as const });
+});
+
+mockPayments.post("/support-plans/:planId/cancel", requireAuth, async (c) => {
+  const session = c.get("session")!;
+  const [plan] = await db.select().from(subscription).where(and(eq(subscription.id, c.req.param("planId")), eq(subscription.userId, session.user.id), inArray(subscription.status, ["active", "canceling"]))).limit(1);
+  if (!plan) return c.json({ error: { code: "NOT_FOUND", message: "応援プランが見つかりません" } }, 404);
+  await db.update(subscription).set({ status: "canceling", cancelAtPeriodEnd: true, canceledAt: plan.canceledAt ?? new Date(), updatedAt: new Date() }).where(eq(subscription.id, plan.id));
+  const [targetZoo] = await db.select({ id: zoo.id, name: zoo.name, objectKey: mediaAsset.objectKey }).from(zoo).leftJoin(mediaAsset, eq(zoo.profileMediaAssetId, mediaAsset.id)).where(eq(zoo.id, plan.zooId)).limit(1);
+  return c.json({ id: plan.id, zoo: { id: plan.zooId, name: targetZoo?.name ?? "", avatarUrl: publicMediaUrl(targetZoo?.objectKey ?? null) }, nextRenewalDate: (plan.currentPeriodEnd ?? new Date(plan.createdAt.getTime() + 30 * 24 * 60 * 60 * 1000)).toISOString().slice(0, 10), status: "cancel_scheduled" as const });
+});
+
+mockPayments.post("/videos/:videoId/tip-checkout", requireAuth, async (c) => {
+  const body = await c.req.json<unknown>().catch(() => null);
+  if (!body || typeof body !== "object" || !("amount" in body) || !("comment" in body) || typeof body.amount !== "number" || typeof body.comment !== "string") {
+    return c.json({ error: { code: "VALIDATION_ERROR", message: "投げ銭内容を確認してください" } }, 422);
+  }
+  const comment = body.comment.trim();
+  if (![100, 300, 500].includes(body.amount) || !comment || comment.length > 200) return c.json({ error: { code: "VALIDATION_ERROR", message: "投げ銭内容を確認してください" } }, 422);
+  const [target] = await db.select({ id: video.id }).from(video).where(and(eq(video.id, c.req.param("videoId")), eq(video.status, "published"))).limit(1);
+  if (!target) return c.json({ error: { code: "NOT_FOUND", message: "動画が見つかりません" } }, 404);
+  return c.json({ checkoutUrl: resolveMockPaymentUrl(), mode: "mock" as const });
+});
+
+export { mockPayments };

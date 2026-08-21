@@ -30,6 +30,16 @@ export async function createVideoComment(
   videoId: string,
   values: CreateCommentValues,
 ) {
+  if (values.tipAmount > 0) {
+    const checkout = z.object({ checkoutUrl: z.url(), mode: z.literal('mock') }).parse(
+      await api.post<unknown>(`videos/${videoId}/tip-checkout`, {
+        amount: values.tipAmount,
+        comment: values.message,
+      }),
+    )
+    window.location.assign(checkout.checkoutUrl)
+    return new Promise<never>(() => undefined)
+  }
   const response = await api.post<unknown>(`feed/${videoId}/comments`, values)
 
   return feedCommentSchema.parse(response)
