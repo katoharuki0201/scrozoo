@@ -214,11 +214,7 @@ export function ProfileScreen({
                 <XIcon className="size-5" />
               </button>
             </div>
-            <Link className="mt-6 flex h-13 items-center rounded-2xl bg-slate-100 px-4 font-bold text-slate-800" onClick={() => setAccountMenuOpen(false)} to="/mypage/account">
-              <AccountCircleIcon className="size-6" />
-              <span className="ml-3">アカウント情報</span>
-            </Link>
-            <button className="mt-3 flex h-13 w-full items-center rounded-2xl bg-red-50 px-4 text-left font-bold text-red-600 disabled:opacity-50" disabled={logoutMutation.isPending} onClick={() => logoutMutation.mutate()} type="button">
+            <button className="mt-6 flex h-13 w-full items-center rounded-2xl bg-red-50 px-4 text-left font-bold text-red-600 disabled:opacity-50" disabled={logoutMutation.isPending} onClick={() => logoutMutation.mutate()} type="button">
               <LogOutIcon className="size-6" />
               <span className="ml-3">{logoutMutation.isPending ? 'ログアウト中...' : 'ログアウト'}</span>
             </button>

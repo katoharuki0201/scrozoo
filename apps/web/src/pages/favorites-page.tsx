@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Link } from 'react-router'
 import { useAuth } from '../features/auth/hooks/use-auth'
@@ -6,6 +6,7 @@ import { favoriteVideosQueryOptions } from '../features/favorites/api/favorites-
 import type { FavoriteSort } from '../features/favorites/model/favorite'
 import { ProfileAvatar } from '../features/profile/components/profile-avatar'
 import { BottomNavigation } from '../shared/ui/bottom-navigation'
+import { LogOutIcon, XIcon } from '../shared/ui/icons'
 import { VideoGridTile } from '../shared/ui/video-grid-tile'
 
 const sortOptions: Array<{ label: string; value: FavoriteSort }> = [
@@ -15,9 +16,14 @@ const sortOptions: Array<{ label: string; value: FavoriteSort }> = [
 ]
 
 export function FavoritesPage() {
-  const { user } = useAuth()
+  const { logout, user } = useAuth()
   const [sort, setSort] = useState<FavoriteSort>('latest')
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false)
   const favoritesQuery = useQuery(favoriteVideosQueryOptions(sort))
+  const logoutMutation = useMutation({
+    mutationFn: logout,
+    onSuccess: () => setAccountMenuOpen(false),
+  })
 
   return (
     <main className="relative mx-auto h-dvh max-w-[430px] overflow-hidden bg-slate-50 shadow-2xl">
@@ -28,7 +34,9 @@ export function FavoritesPage() {
               <p className="-rotate-2 text-3xl font-black tracking-[-0.08em] text-slate-800 italic">Scrozoo</p>
               <h1 className="sr-only">お気に入り</h1>
             </div>
-            <ProfileAvatar avatarUrl={user?.avatarUrl ?? null} name={user?.name ?? 'ユーザー'} size="small" />
+            <button aria-label="アカウントメニューを開く" className="rounded-full" onClick={() => setAccountMenuOpen(true)} type="button">
+              <ProfileAvatar avatarUrl={user?.avatarUrl ?? null} name={user?.name ?? 'ユーザー'} size="small" />
+            </button>
           </div>
 
           <div aria-label="並び順" className="mt-6 grid grid-cols-3 gap-3" role="group">
@@ -85,6 +93,27 @@ export function FavoritesPage() {
       </div>
 
       <BottomNavigation />
+
+      {accountMenuOpen && (
+        <div className="absolute inset-0 z-50 flex items-end bg-black/45" onClick={() => setAccountMenuOpen(false)} role="presentation">
+          <section aria-label="アカウントメニュー" aria-modal="true" className="w-full rounded-t-3xl bg-white px-5 pt-3" onClick={(event) => event.stopPropagation()} role="dialog" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
+            <div className="mx-auto h-1 w-10 rounded-full bg-slate-300" />
+            <div className="mt-3 flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-black text-slate-900">アカウント</h2>
+                <p className="mt-1 text-sm text-slate-500">{user?.name ?? 'ユーザー'}</p>
+              </div>
+              <button aria-label="閉じる" className="grid size-10 place-items-center rounded-full bg-slate-100 text-slate-700" onClick={() => setAccountMenuOpen(false)} type="button">
+                <XIcon className="size-5" />
+              </button>
+            </div>
+            <button className="mt-6 flex h-13 w-full items-center rounded-2xl bg-red-50 px-4 text-left font-bold text-red-600 disabled:opacity-50" disabled={logoutMutation.isPending} onClick={() => logoutMutation.mutate()} type="button">
+              <LogOutIcon className="size-6" />
+              <span className="ml-3">{logoutMutation.isPending ? 'ログアウト中...' : 'ログアウト'}</span>
+            </button>
+          </section>
+        </div>
+      )}
     </main>
   )
 }
