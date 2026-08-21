@@ -36,7 +36,7 @@ export const uploadPolicies: Record<MediaPurpose, UploadPolicy> = {
     creatorOnly: true,
   },
   video: {
-    contentTypes: ["video/mp4"],
+    contentTypes: ["video/mp4", "video/webm", "video/quicktime"],
     maxBytes: 250 * 1024 * 1024,
     creatorOnly: true,
   },
@@ -85,6 +85,7 @@ export function extensionFor(contentType: string) {
     "image/webp": "webp",
     "video/mp4": "mp4",
     "video/webm": "webm",
+    "video/quicktime": "mov",
   }[contentType];
 }
 

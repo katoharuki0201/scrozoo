@@ -4,6 +4,7 @@ import { z } from 'zod'
 const MOCK_EMAIL_TOKEN = 'mock-email-session-token'
 const MOCK_GOOGLE_TOKEN = 'mock-google-session-token'
 const MOCK_CREATOR_TOKEN = 'mock-creator-session-token'
+let mockCurrentToken: string | null = null
 let mockAdminSignedIn = false
 
 let likedVideoIds = new Set<string>([
@@ -59,6 +60,7 @@ const mockCreatorSupporters = Array.from({ length: 38 }, (_, index) => {
       .slice(0, 2)
       .map((part) => part.charAt(0).toUpperCase())
       .join(''),
+    avatarUrl: null,
     joinedAt: joinedAt.toISOString().slice(0, 10),
     nextRenewalDate: nextRenewalDate.toISOString().slice(0, 10),
     status: [5, 17, 29].includes(index) ? 'cancel_scheduled' as const : 'active' as const,
@@ -108,7 +110,7 @@ function addSupportGoalAmount(zooId: string, amount: number) {
 
 const commentRequestSchema = z.object({
   message: z.string().trim().min(1).max(200),
-  tipAmount: z.union([z.literal(0), z.literal(100), z.literal(300), z.literal(500)]),
+  tipAmount: z.number().int().refine((amount) => amount === 0 || (amount >= 100 && amount <= 3000)),
 })
 
 const commentsByVideo = new Map<string, Array<Record<string, unknown>>>()
@@ -179,7 +181,6 @@ const registrationRequestSchema = z.object({
 
 const accountInformationRequestSchema = z.object({
   name: z.string().trim().min(1).max(30),
-  email: z.email(),
   bio: z.string().trim().max(200),
 })
 
@@ -210,6 +211,7 @@ const creatorPostMetadataSchema = z.object({
   durationMs: z.number().int().positive().max(60_000),
   caption: z.string().trim().min(1).max(120),
   tags: z.array(z.string().trim().min(1).max(20)).max(5),
+  animalId: z.string().min(1),
 })
 
 const defaultBio = '【動物動画の鑑賞垢】動物たちの可愛い姿や面白いハプニング動画を見て日々癒やされています。もふもふ系の動画に無言いいね多めです。素敵な投稿いつもありがとうございます！'
@@ -288,7 +290,7 @@ const mockAdminSubscribers = Array.from({ length: 18 }, (_, index) => ({
 }))
 
 function getToken(request: Request) {
-  return request.headers.get('Authorization')?.replace(/^Bearer\s+/i, '')
+  return request.headers.get('Authorization')?.replace(/^Bearer\s+/i, '') ?? mockCurrentToken
 }
 
 function requireAdmin(request: Request) {
@@ -504,6 +506,43 @@ function mockCreatorVisitQrPayload() {
 }
 
 export const handlers = [
+  http.post('*/api/auth/sign-up/email', async ({ request }) => {
+    await delay(500)
+    const result = registrationRequestSchema.safeParse(await request.json())
+    if (!result.success) return HttpResponse.json({ message: '入力内容を確認してください。' }, { status: 422 })
+    const email = result.data.email.toLowerCase()
+    if (registeredEmails.has(email)) return HttpResponse.json({ message: 'このメールアドレスはすでに登録されています。' }, { status: 409 })
+    registeredEmails.add(email)
+    accountByToken.set(MOCK_EMAIL_TOKEN, { name: result.data.name, email, bio: '', role: 'viewer' })
+    mockCurrentToken = MOCK_EMAIL_TOKEN
+    return HttpResponse.json({ user: { id: 'mock-email-user', name: result.data.name, email, image: null, role: 'viewer' } })
+  }),
+  http.post('*/api/auth/sign-in/email', async ({ request }) => {
+    await delay(450)
+    const result = loginRequestSchema.safeParse(await request.json())
+    if (!result.success) return HttpResponse.json({ message: 'メールアドレスまたはパスワードが正しくありません。' }, { status: 401 })
+    const email = result.data.email.toLowerCase()
+    const creator = mockAdminCreators.find((item) => item.email === email)
+    if (creator && (creator.password !== result.data.password || creator.status !== 'active')) return HttpResponse.json({ message: 'メールアドレスまたはパスワードが正しくありません。' }, { status: 401 })
+    const token = creator?.token ?? MOCK_EMAIL_TOKEN
+    const account = creator ? accountByToken.get(token)! : accountByToken.get(MOCK_EMAIL_TOKEN)!
+    mockCurrentToken = token
+    return HttpResponse.json({ user: { id: creator?.id ?? 'mock-email-user', name: account.name, email: account.email, image: null, role: account.role } })
+  }),
+  http.post('*/api/auth/sign-in/social', async () => {
+    mockCurrentToken = MOCK_GOOGLE_TOKEN
+    return HttpResponse.json({ url: location.origin })
+  }),
+  http.get('*/api/auth/get-session', async () => {
+    const account = mockCurrentToken ? accountByToken.get(mockCurrentToken) : null
+    if (!account) return HttpResponse.json(null)
+    const creator = mockAdminCreators.find((item) => item.token === mockCurrentToken)
+    return HttpResponse.json({ user: { id: creator?.id ?? (mockCurrentToken === MOCK_GOOGLE_TOKEN ? 'mock-google-user' : 'mock-email-user'), name: account.name, email: account.email, image: null, role: account.role } })
+  }),
+  http.post('*/api/auth/sign-out', async () => {
+    mockCurrentToken = null
+    return new HttpResponse(null, { status: 204 })
+  }),
   http.post('*/api/uploads', async ({ request }) => {
     const body = z.object({
       purpose: z.string(),
@@ -835,7 +874,7 @@ export const handlers = [
       return HttpResponse.json({ message: 'Unauthorized' }, { status: 401 })
     }
 
-    if (!session || session.used || new Date(session.expiresAt).getTime() <= Date.now()) {
+    if (!session || new Date(session.expiresAt).getTime() <= Date.now()) {
       return HttpResponse.json({ message: 'Visit session expired' }, { status: 404 })
     }
 
@@ -862,7 +901,7 @@ export const handlers = [
 
     const session = qrVisitSessions.get(result.data.sessionId)
 
-    if (!session || session.used || new Date(session.expiresAt).getTime() <= Date.now()) {
+    if (!session || new Date(session.expiresAt).getTime() <= Date.now()) {
       return HttpResponse.json({ message: 'Visit session expired' }, { status: 400 })
     }
 
@@ -876,7 +915,6 @@ export const handlers = [
       },
       zoo: session.zoo,
     }
-    session.used = true
     mockGalleryPosts.unshift(post)
 
     return HttpResponse.json(post, { status: 201 })
@@ -911,9 +949,10 @@ export const handlers = [
     }
 
     const currentAccount = accountByToken.get(token)!
-    accountByToken.set(token, { ...result.data, role: currentAccount.role })
+    const updated = { ...currentAccount, ...result.data }
+    accountByToken.set(token, updated)
 
-    return HttpResponse.json(result.data)
+    return HttpResponse.json(updated)
   }),
   http.get('*/api/profiles/me/support-goal', async ({ request }) => {
     await delay(240)
@@ -998,7 +1037,9 @@ export const handlers = [
     return HttpResponse.json({ checkoutUrl: 'https://buy.stripe.com/test_7sYcN5b1wgAafpA8JwaMU00', mode: 'mock' })
   }),
   http.post('*/api/videos/:videoId/tip-checkout', async ({ params, request }) => {
-    const result = z.object({ amount: z.union([z.literal(100), z.literal(300), z.literal(500)]), comment: z.string().trim().min(1).max(200) }).safeParse(await request.json())
+    const account = accountByToken.get(getToken(request) ?? '')
+    if (!account || account.role === 'creator') return HttpResponse.json({ message: 'Forbidden' }, { status: 403 })
+    const result = z.object({ amount: z.number().int().min(100).max(3000), comment: z.string().trim().min(1).max(200) }).safeParse(await request.json())
     if (!result.success || !mockVideos.some((video) => video.id === String(params.videoId))) return HttpResponse.json({ message: 'Invalid tip' }, { status: 422 })
     return HttpResponse.json({ checkoutUrl: 'https://buy.stripe.com/test_7sYcN5b1wgAafpA8JwaMU00', mode: 'mock' })
   }),
@@ -1065,6 +1106,11 @@ export const handlers = [
       { status: 201 },
     )
   }),
+  http.get('*/api/publisher/animals', async ({ request }) => {
+    const account = accountByToken.get(getToken(request) ?? '')
+    if (account?.role !== 'creator') return HttpResponse.json({ message: 'Forbidden' }, { status: 403 })
+    return HttpResponse.json([{ id: 'tama-kangaroo', name: 'ルー', species: 'カンガルー' }, { id: 'tama-tiger', name: 'アイ', species: 'トラ' }])
+  }),
   http.get('*/api/creator/supporters', async ({ request }) => {
     await delay(420)
 
@@ -1130,6 +1176,11 @@ export const handlers = [
         },
       })),
     })
+  }),
+  http.get('*/api/users/:userId/profile', async ({ params }) => {
+    const supporter = mockCreatorSupporters.find((item) => item.id === String(params.userId))
+    if (!supporter) return HttpResponse.json({ message: 'Not found' }, { status: 404 })
+    return HttpResponse.json({ id: supporter.id, accountRole: 'viewer', name: supporter.name, avatarUrl: supporter.avatarUrl, bio: '動物たちを応援しています。', videoCount: null, supporterCount: null, supportPrice: null, supportGoal: null, videos: [], galleryPosts: [] })
   }),
   http.get('*/api/zoos/:zooId/profile', async ({ params }) => {
     await delay(300)

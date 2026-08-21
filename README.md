@@ -27,11 +27,11 @@ TechJam 2026 チームBの企画として開発しています。
 - Turso + Drizzle ORM
 - Better Auth
 - Cloudflare R2
-- Stripe Sandbox
+- Stripe テスト Payment Link（API連携なし）
 - Cloudflare Workers / Pages
 - Bun
 
-モックは各サービスの無料枠と Stripe Sandbox を使って公開する想定です。詳細は [技術構成](./docs/architecture.md) を参照してください。
+モックは各サービスの無料枠と Stripe テスト Payment Link を使って公開する想定です。詳細は [技術構成](./docs/architecture.md) を参照してください。
 
 ## 開発状況
 

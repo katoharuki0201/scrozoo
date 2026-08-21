@@ -4,6 +4,7 @@ export const creatorSupporterSchema = z.object({
   id: z.string(),
   name: z.string(),
   initials: z.string(),
+  avatarUrl: z.string().nullable(),
   joinedAt: z.string(),
   nextRenewalDate: z.string(),
   status: z.enum(['active', 'cancel_scheduled']),

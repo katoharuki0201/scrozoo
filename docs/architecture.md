@@ -12,7 +12,7 @@ TechJam 2026 の推奨スタックに合わせ、モックを無料枠内で公�
 | ORM | Drizzle ORM |
 | 認証 | Better Auth |
 | 動画・画像保存 | Cloudflare R2 |
-| 決済 | Stripe Sandbox |
+| 決済モック | Stripe テスト Payment Link（API連携なし） |
 | QR コード | QR コード生成・読み取りライブラリ |
 | デプロイ | Cloudflare Workers / Pages |
 | 言語 | TypeScript |
@@ -93,7 +93,7 @@ bun run dev
 
 - Stripe は Sandbox とテスト API キーのみ使い、実際のお金を移動させない。
 - 月額500円のサブスクリプションと、100円〜3,000円の投げ銭をテスト決済で再現する。
-- Webhook の署名を Hono で検証し、同じイベント ID を二重反映しない。
+- Stripe APIとWebhookは接続せず、共通のテスト Payment Linkへ遷移する。
 - テストカード以外の入力を促さず、画面上に「テスト決済で実際の請求は発生しない」と表示する。
 
 ## QR コード

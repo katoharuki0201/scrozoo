@@ -2,7 +2,7 @@
 
 ## 目的
 
-MSW で実装されているフロントエンド向け API を、Hono、Better Auth、Drizzle ORM、Turso、Cloudflare R2 を使う実 API へ移行する。
+MSWで動作するフロントエンド向けAPIと、Hono、Better Auth、Drizzle ORM、Turso、Cloudflare R2を使う実APIの契約を揃える。
 
 2026-08-21 時点では Wrangler を使用せず、R2 には公開用の `scrozoo-public` バケットのみを作成済みとする。
 
@@ -13,7 +13,7 @@ MSW で実装されているフロントエンド向け API を、Hono、Better 
 - R2 の Access Key ID、Secret Access Key は API サーバーのみが保持し、Web 側や `VITE_*` 環境変数には入れない。
 - 新規 API は入力検証、認可、正常系、主要な異常系のテストを同時に追加する。
 - 決済やアップロードは、DB 更新と外部サービスの結果が不整合にならないように設計する。
-- 対応完了した MSW ハンドラーは削除し、最終的に MSW 依存と `mockServiceWorker.js` を削除する。
+- `VITE_ENABLE_MOCKS=true` ではバックエンドなしで主要導線を確認できる状態を維持する。
 
 ## 現在実装済み
 
@@ -63,7 +63,7 @@ MSW で実装されているフロントエンド向け API を、Hono、Better 
   - `animalProfile`: JPEG / PNG / WebP
   - `galleryImage`: JPEG / WebP
   - `videoPreview`: MP4 / WebM（ブラウザ内生成時のフォールバック）
-  - `video`: MP4
+  - `video`: MP4 / WebM / QuickTime
 - [x] `POST /api/uploads/:uploadId/complete` を実装する。
   - R2 上にオブジェクトが存在することを `HEAD` 相当で確認
   - Content-Type とサイズが事前申告と一致することを確認
@@ -86,8 +86,7 @@ MSW で実装されているフロントエンド向け API を、Hono、Better 
 
 ## P1: 認証とアカウント
 
-- [ ] Google OAuth の `GOOGLE_CLIENT_ID` と `GOOGLE_CLIENT_SECRET` を本番環境へ設定する。
-- [ ] Google OAuth のコールバック URL を Google Cloud Console へ登録する。
+- [x] Google OAuth の共通設定とコールバック URL を利用環境へ設定する。
 - [x] 登録時に `user_profile` を自動作成する DB hook または初期化処理を追加する。
 - [x] `viewer`、`creator`、`admin` のロール名を DB、Better Auth、フロントで統一する。
 - [x] メールアドレス変更は現行画面との互換性を保つ暫定仕様とし、本番提供前に確認メール方式へ移行する。
@@ -145,10 +144,10 @@ MSW で実装されているフロントエンド向け API を、Hono、Better 
 - [x] `GET /api/profiles/me/support-goal`
 - [x] `PUT /api/profiles/me/support-goal`
 - [x] `DELETE /api/profiles/me/support-goal`
-- [ ] 金額は Stripe Webhook で決済成功を確認した後だけ加算する。
+- [x] Stripe未接続のため、Payment Link遷移では応援目標へ加算しない。
 - [x] 期限切れと達成済みのステータス判定を共通化する。
 
-## P2: Stripe Sandbox、応援プラン、投げ銭
+## P2: Payment Link、応援プラン、投げ銭モック
 
 - [x] 今回はStripe SDK・Webhookを実装せず、指定されたStripeテストPayment Linkを共通利用する。
 - [x] `POST /api/support-plans`で対象動物園を検証し、モック決済URLを返す。
@@ -189,16 +188,15 @@ MSW で実装されているフロントエンド向け API を、Hono、Better 
 - [ ] DB index と実際のクエリの利用状況を確認する。
 - [ ] 初期開発データを作成する seed スクリプトを追加する。
 - [ ] API の unit test と一時 SQLite を使う integration test を追加する。
-- [ ] Web の主要導線を E2E テストする。
-- [ ] `bun run typecheck`、Web lint、Web build、DB migration を CI で実行する。
+- [ ] Web の主要導線はMVP提出前に手動確認する。
+- [ ] CIとE2EテストはMVP対象外とする。
 - [ ] 本番ログで Cookie、Authorization、R2 署名付き URL、個人情報を出力しない。
 
-## MSW 削除の完了条件
+## MSW・実API整合の完了条件
 
 - [ ] `apps/web/src/mocks/handlers.ts` に残るすべての API が Hono で実装されている。
 - [ ] フロントの API レスポンスと Hono の応答の Zod 検証が一致する。
-- [ ] ローカルと本番相当環境で MSW 無効の E2E テストが成功する。
-- [ ] `msw` 依存、`src/mocks`、`public/mockServiceWorker.js`、`VITE_ENABLE_MOCKS` を削除する。
+- [ ] `VITE_ENABLE_MOCKS=true` と実API接続時の主要導線を手動確認する。
 
 ## 推奨実装順
 
@@ -209,6 +207,6 @@ MSW で実装されているフロントエンド向け API を、Hono、Better 
 5. 投稿者の動画管理 API
 6. QR 認証とギャラリー
 7. 応援目標
-8. Stripe Sandbox、応援プラン、投げ銭
+8. Payment Link、応援プラン、投げ銭モック
 9. 管理画面 API
-10. MSW の完全削除
+10. MSW と実APIの契約整合

@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { Link } from 'react-router'
 import { creatorSupportersQueryOptions } from '../features/creator-supporter/api/creator-supporter-api'
 import type { CreatorSupporter } from '../features/creator-supporter/model/creator-supporter'
 import { BottomNavigation } from '../shared/ui/bottom-navigation'
@@ -20,10 +21,9 @@ function SupporterRow({ supporter }: { supporter: CreatorSupporter }) {
 
   return (
     <li className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+      <Link className="block" to={`/users/${encodeURIComponent(supporter.id)}`}>
       <div className="flex items-start gap-3">
-        <div className="grid size-12 shrink-0 place-items-center rounded-full bg-gradient-to-br from-orange-100 to-sky-100 text-sm font-black text-slate-700">
-          {supporter.initials}
-        </div>
+        {supporter.avatarUrl ? <img alt="" className="size-12 shrink-0 rounded-full object-cover" src={supporter.avatarUrl} /> : <div className="grid size-12 shrink-0 place-items-center rounded-full bg-gradient-to-br from-orange-100 to-sky-100 text-sm font-black text-slate-700">{supporter.initials}</div>}
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
             <p className="truncate pt-0.5 font-black text-slate-800">{supporter.name}</p>
@@ -43,6 +43,7 @@ function SupporterRow({ supporter }: { supporter: CreatorSupporter }) {
           </dl>
         </div>
       </div>
+      </Link>
     </li>
   )
 }

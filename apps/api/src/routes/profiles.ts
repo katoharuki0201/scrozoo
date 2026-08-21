@@ -1,4 +1,4 @@
-import { and, count, desc, eq, inArray, isNull } from "drizzle-orm";
+import { and, count, desc, eq, gt, inArray, isNull, or } from "drizzle-orm";
 import { Hono } from "hono";
 
 import { db } from "../db";
@@ -20,8 +20,6 @@ import {
 import { toSupportGoalResponse } from "../lib/support-goal";
 
 const profiles = new Hono<AuthEnv>();
-
-const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function mediaUrl(objectKey: string | null) {
   if (!objectKey) return null;
@@ -110,6 +108,7 @@ async function creatorProfile(zooId: string) {
         and(
           eq(subscription.zooId, zooId),
           inArray(subscription.status, ["active", "canceling"]),
+          or(isNull(subscription.currentPeriodEnd), gt(subscription.currentPeriodEnd, new Date())),
         ),
       ),
     db
@@ -145,10 +144,18 @@ profiles.get("/zoos/:zooId/profile", async (c) => {
   const profile = await creatorProfile(c.req.param("zooId"));
 
   if (!profile) {
-    return c.json({ message: "Not found" }, 404);
+    return c.json({ error: { code: "NOT_FOUND", message: "動物園が見つかりません" } }, 404);
   }
 
   return c.json(profile);
+});
+
+profiles.get("/users/:userId/profile", async (c) => {
+  const userId = c.req.param("userId");
+  const [row] = await db.select({ id: user.id, name: user.name, avatarUrl: user.image, bio: userProfile.bio })
+    .from(user).leftJoin(userProfile, eq(user.id, userProfile.userId)).where(eq(user.id, userId)).limit(1);
+  if (!row) return c.json({ error: { code: "NOT_FOUND", message: "ユーザーが見つかりません" } }, 404);
+  return c.json({ id: row.id, accountRole: "viewer", name: row.name, avatarUrl: row.avatarUrl, bio: row.bio ?? "", videoCount: null, supporterCount: null, supportPrice: null, supportGoal: null, videos: [], galleryPosts: await galleryForUser(userId) });
 });
 
 profiles.use("/profiles/me/*", requireAuth);
@@ -210,28 +217,25 @@ profiles.patch("/profiles/me/account", async (c) => {
     !body ||
     typeof body !== "object" ||
     !("name" in body) ||
-    !("email" in body) ||
     !("bio" in body) ||
     typeof body.name !== "string" ||
-    typeof body.email !== "string" ||
     typeof body.bio !== "string"
   ) {
-    return c.json({ message: "入力内容を確認してください。" }, 400);
+    return c.json({ error: { code: "VALIDATION_ERROR", message: "入力内容を確認してください" } }, 422);
   }
 
   const name = body.name.trim();
-  const email = body.email.trim().toLowerCase();
   const bio = body.bio.trim();
 
-  if (!name || name.length > 30 || !emailPattern.test(email) || bio.length > 200) {
-    return c.json({ message: "入力内容を確認してください。" }, 400);
+  if (!name || name.length > 30 || bio.length > 200) {
+    return c.json({ error: { code: "VALIDATION_ERROR", message: "入力内容を確認してください" } }, 422);
   }
 
   try {
     await db.transaction(async (tx) => {
       await tx
         .update(user)
-        .set({ name, email, updatedAt: new Date() })
+        .set({ name, updatedAt: new Date() })
         .where(eq(user.id, session.user.id));
       await tx
         .insert(userProfile)
@@ -243,12 +247,12 @@ profiles.patch("/profiles/me/account", async (c) => {
     });
   } catch (error) {
     if (error instanceof Error && /unique/i.test(error.message)) {
-      return c.json({ message: "このメールアドレスはすでに使用されています。" }, 409);
+      return c.json({ error: { code: "CONFLICT", message: "このメールアドレスはすでに使用されています" } }, 409);
     }
     throw error;
   }
 
-  return c.json({ name, email, bio });
+  return c.json({ name, email: session.user.email, bio });
 });
 
 profiles.delete("/profiles/me", requireAuth, async (c) => {

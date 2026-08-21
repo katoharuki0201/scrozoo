@@ -107,15 +107,15 @@ function AccountInformationForm({ initialValues }: { initialValues: AccountInfor
           <div>
             <label className="text-xl font-black text-slate-800" htmlFor="account-email">メールアドレス</label>
             <input
-              {...form.register('email')}
-              aria-invalid={Boolean(form.formState.errors.email)}
+              value={initialValues.email}
               autoComplete="email"
               className={`${fieldClassName} h-14`}
               id="account-email"
               inputMode="email"
               type="email"
+              readOnly
             />
-            {form.formState.errors.email && <p className="mt-2 text-xs text-red-600" role="alert">{form.formState.errors.email.message}</p>}
+            <p className="mt-2 text-xs text-slate-500">メールアドレスは変更できません。</p>
           </div>
 
           <div>

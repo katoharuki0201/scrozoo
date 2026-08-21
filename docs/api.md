@@ -53,8 +53,7 @@ Better Auth の handler を `/api/auth/*` にマウントする。
 | `GET` | `/api/me` | 必須 | 本人情報、メールアドレス、権限を取得 |
 | `PATCH` | `/api/me` | 必須 | ユーザー名、アイコン、自己紹介を更新 |
 | `DELETE` | `/api/me` | 必須 | 退会し、公開名を退会済み表示に変更 |
-| `GET` | `/api/users/:userId` | 不要 | 公開プロフィール |
-| `GET` | `/api/users/:userId/gallery` | 不要 | 公開ギャラリー |
+| `GET` | `/api/users/:userId/profile` | 不要 | 公開プロフィールと公開ギャラリー |
 
 ## 4. 動物園・動物
 
@@ -90,10 +89,8 @@ Better Auth の handler を `/api/auth/*` にマウントする。
 | `GET` | `/api/profiles/me/support-plans` | 必須 | DBに登録済みの加入中・解約予定プラン一覧 |
 | `POST` | `/api/support-plans/:planId/cancel` | 必須 | DBに登録済みの契約を期間末解約予定にする |
 | `POST` | `/api/videos/:videoId/tip-checkout` | 必須 | 投げ銭内容を検証し、共通のStripeテストPayment Linkを返す |
-| `GET` | `/api/me/support-logs` | 必須 | 月額加入と投げ銭履歴 |
-| `POST` | `/api/webhooks/stripe` | Stripe | Webhook を検証し、決済状態と権限を反映 |
 
-今回のモックではStripe APIとWebhookを使用しない。加入・投げ銭APIは `{ checkoutUrl, mode: "mock" }` を返し、フロントは指定されたテストPayment Linkへ遷移する。遷移だけではDB状態やコメントを更新しない。
+Stripe APIとWebhookは使用しない。加入・投げ銭APIは `{ checkoutUrl, mode: "mock" }` を返し、フロントは指定されたテストPayment Linkへ遷移する。遷移だけではDB状態やコメントを更新しない。サポート履歴は `GET /api/profiles/me/support-plans` の契約プラン一覧として扱う。
 
 ## 7. QR 認証・ギャラリー
 
@@ -102,7 +99,7 @@ Better Auth の handler を `/api/auth/*` にマウントする。
 | `POST` | `/api/visits/verify` | 必須 | QR トークンを検証し、2時間の投稿権限を発行 |
 | `GET` | `/api/zoos/:zooId/gallery` | 不要 | 動物園のギャラリー |
 | `GET` | `/api/gallery/:postId` | 不要 | ギャラリー投稿詳細 |
-| `POST` | `/api/gallery` | QR 認証済み | タイトル、画像、対象動物を指定して投稿 |
+| `POST` | `/api/gallery/posts` | QR 認証済み | アップロード済み画像を投稿 |
 | `GET` | `/api/me/gallery` | 必須 | 自分のギャラリー投稿 |
 
 `POST /api/visits/verify` は `token` を受け取り、`visitPermitId`、`zooId`、`expiresAt` を返す。
@@ -131,7 +128,7 @@ Better Auth の handler を `/api/auth/*` にマウントする。
 | `POST` | `/api/creator/posts` | アップロード済み動画から投稿を作成（既存フロント契約） |
 | `PATCH` | `/api/publisher/videos/:videoId` | 説明、動物、タグ、公開状態を更新 |
 | `DELETE` | `/api/publisher/videos/:videoId` | 投稿動画を非公開化 |
-| `GET` | `/api/publisher/supporters` | プラン加入者と投げ銭利用者 |
+| `GET` | `/api/creator/supporters` | プラン加入者 |
 | `GET` | `/api/publisher/visit-qr` | 来園認証 URL と QR 表示用情報 |
 
 `GET /api/publisher/visit-qr` は自身の動物園に固定された無期限の `payload`、`expiresAt: null`、動物園情報を返す。未発行の場合のみ作成し、再取得では同じ `payload` を返す。
@@ -149,6 +146,6 @@ Better Auth の handler を `/api/auth/*` にマウントする。
 2. 動物園、動物、動画の参照 API
 3. R2 アップロードと投稿者の動画管理
 4. コメント、お気に入り、公開プロフィール
-5. Stripe Sandbox、応援プラン、投げ銭、サポートログ
+5. Payment Link、応援プラン、投げ銭モック、契約プラン一覧
 6. QR 認証とギャラリー
 7. サポーター一覧

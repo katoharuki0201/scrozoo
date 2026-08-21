@@ -20,6 +20,7 @@ import { CreatorPostCreationPage } from './pages/creator-post-creation-page'
 import { CreatorSupportersPage } from './pages/creator-supporters-page'
 import { CreatorVideoPage } from './pages/creator-video-page'
 import { CreatorVisitQrPage } from './pages/creator-visit-qr-page'
+import { PublicUserProfilePage } from './pages/public-user-profile-page'
 import { AdminGuestRoute } from './features/admin/components/admin-guest-route'
 import { AdminProtectedRoute } from './features/admin/components/admin-protected-route'
 import { AdminLayout } from './features/admin/components/admin-layout'
@@ -51,6 +52,8 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegistrationPage />} />
       </Route>
+
+      <Route path="/users/:userId" element={<PublicUserProfilePage />} />
 
       <Route element={<ProtectedRoute />}>
         <Route path="/mypage" element={<MyProfilePage />} />

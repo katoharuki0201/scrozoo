@@ -1,4 +1,4 @@
-import { and, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, count, desc, eq, gt, inArray, isNull, lt, or, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/sqlite-core";
 import { Hono } from "hono";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
@@ -48,6 +48,7 @@ async function feedRows(currentUserId?: string, options: FeedOptions = {}) {
   const avatarAsset = alias(mediaAsset, "avatar_asset");
   const query = options.query?.trim().toLocaleLowerCase("ja-JP") ?? "";
   const limit = Math.min(50, Math.max(1, options.limit ?? 50));
+  const [cursorRow] = options.cursor ? await db.select({ publishedAt: video.publishedAt }).from(video).where(eq(video.id, options.cursor)).limit(1) : [];
   const rows = await db
     .select({
       id: video.id,
@@ -71,6 +72,10 @@ async function feedRows(currentUserId?: string, options: FeedOptions = {}) {
     .where(and(
       eq(video.status, "published"),
       eq(zoo.status, "active"),
+      cursorRow?.publishedAt && options.cursor ? or(
+        lt(video.publishedAt, cursorRow.publishedAt),
+        and(eq(video.publishedAt, cursorRow.publishedAt), lt(video.id, options.cursor)),
+      ) : undefined,
       query ? sql`(
         lower(${video.description}) like ${`%${query}%`} or
         lower(${zoo.name}) like ${`%${query}%`} or
@@ -79,11 +84,10 @@ async function feedRows(currentUserId?: string, options: FeedOptions = {}) {
         exists (select 1 from video_tag vt join tag t on t.id = vt.tag_id where vt.video_id = ${video.id} and lower(t.name) like ${`%${query}%`})
       )` : undefined,
     ))
-    .orderBy(desc(video.publishedAt))
-    .limit(options.cursor ? 1000 : limit + 1);
+    .orderBy(desc(video.publishedAt), desc(video.id))
+    .limit(limit);
 
-  const cursorIndex = options.cursor ? rows.findIndex((row) => row.id === options.cursor) : -1;
-  const pageRows = rows.slice(cursorIndex >= 0 ? cursorIndex + 1 : 0, (cursorIndex >= 0 ? cursorIndex + 1 : 0) + limit);
+  const pageRows = rows;
   const videoIds = pageRows.map((row) => row.id);
   const zooIds = [...new Set(pageRows.map((row) => row.zooId))];
   if (videoIds.length === 0) return [];
@@ -93,7 +97,7 @@ async function feedRows(currentUserId?: string, options: FeedOptions = {}) {
     db.select({ videoId: favorite.videoId, value: count() }).from(favorite).where(inArray(favorite.videoId, videoIds)).groupBy(favorite.videoId),
     db.select({ videoId: comment.videoId, value: count() }).from(comment).where(inArray(comment.videoId, videoIds)).groupBy(comment.videoId),
     currentUserId ? db.select({ videoId: favorite.videoId }).from(favorite).where(and(eq(favorite.userId, currentUserId), inArray(favorite.videoId, videoIds))) : Promise.resolve([]),
-    currentUserId && zooIds.length ? db.select({ zooId: subscription.zooId }).from(subscription).where(and(eq(subscription.userId, currentUserId), inArray(subscription.zooId, zooIds), inArray(subscription.status, ["active", "canceling"]))) : Promise.resolve([]),
+    currentUserId && zooIds.length ? db.select({ zooId: subscription.zooId }).from(subscription).where(and(eq(subscription.userId, currentUserId), inArray(subscription.zooId, zooIds), inArray(subscription.status, ["active", "canceling"]), or(isNull(subscription.currentPeriodEnd), gt(subscription.currentPeriodEnd, new Date())))) : Promise.resolve([]),
     zooIds.length ? db.select().from(supportGoal).where(and(inArray(supportGoal.zooId, zooIds), isNull(supportGoal.archivedAt))) : Promise.resolve([]),
   ]);
   const tagsByVideo = new Map<string, string[]>();
@@ -182,7 +186,7 @@ content.post("/feed/:videoId/like", requireAuth, async (c) => {
   const session = c.get("session")!;
   const videoId = c.req.param("videoId");
   const [existingVideo] = await db.select({ id: video.id }).from(video).where(eq(video.id, videoId)).limit(1);
-  if (!existingVideo) return c.json({ message: "Not found" }, 404);
+  if (!existingVideo) return c.json({ error: { code: "NOT_FOUND", message: "動画が見つかりません" } }, 404);
 
   const [existing] = await db
     .select({ userId: favorite.userId })
@@ -229,20 +233,20 @@ content.post("/feed/:videoId/comments", requireAuth, async (c) => {
   const session = c.get("session")!;
   const body = await c.req.json<unknown>().catch(() => null);
   if (!body || typeof body !== "object" || !("message" in body) || !("tipAmount" in body) || typeof body.message !== "string" || typeof body.tipAmount !== "number") {
-    return c.json({ message: "コメントの内容を確認してください。" }, 400);
+    return c.json({ error: { code: "VALIDATION_ERROR", message: "コメントの内容を確認してください" } }, 422);
   }
   const message = body.message.trim();
   if (!message || message.length > 200 || ![0, 100, 300, 500].includes(body.tipAmount)) {
-    return c.json({ message: "コメントの内容を確認してください。" }, 400);
+    return c.json({ error: { code: "VALIDATION_ERROR", message: "コメントの内容を確認してください" } }, 422);
   }
   if (body.tipAmount > 0) {
-    return c.json({ message: "投げ銭決済APIはまだ接続されていません。" }, 501);
+    return c.json({ error: { code: "USE_TIP_CHECKOUT", message: "投げ銭は専用の決済導線を使用してください" } }, 409);
   }
 
   const videoId = c.req.param("videoId");
   const [videoRow] = await db.select({ zooId: video.zooId }).from(video).where(eq(video.id, videoId)).limit(1);
-  if (!videoRow) return c.json({ message: "Not found" }, 404);
-  const [supported] = await db.select({ id: subscription.id }).from(subscription).where(and(eq(subscription.userId, session.user.id), eq(subscription.zooId, videoRow.zooId), inArray(subscription.status, ["active", "canceling"]))).limit(1);
+  if (!videoRow) return c.json({ error: { code: "NOT_FOUND", message: "動画が見つかりません" } }, 404);
+  const [supported] = await db.select({ id: subscription.id }).from(subscription).where(and(eq(subscription.userId, session.user.id), eq(subscription.zooId, videoRow.zooId), inArray(subscription.status, ["active", "canceling"]), or(isNull(subscription.currentPeriodEnd), gt(subscription.currentPeriodEnd, new Date())))).limit(1);
 
   const created = {
     id: crypto.randomUUID(),

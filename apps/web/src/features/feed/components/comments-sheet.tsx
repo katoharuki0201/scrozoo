@@ -16,7 +16,7 @@ import {
 } from '../model/feed'
 import { FeedSheet } from './feed-sheet'
 
-const tipOptions = [100, 300, 500] as const
+const tipOptions = [100, 500, 1000, 3000] as const
 type CommentGroup = 'regular' | 'supporter'
 
 const tipStyles = {
@@ -40,6 +40,12 @@ const tipStyles = {
     selected: 'bg-rose-500 text-white shadow-md',
     idle: 'border border-rose-200 bg-white text-rose-600',
     submit: 'from-orange-400 to-rose-500',
+  },
+  1000: {
+    card: 'border-rose-200 bg-gradient-to-br from-rose-50 to-pink-50', amount: 'text-rose-600', selected: 'bg-rose-500 text-white shadow-md', idle: 'border border-rose-200 bg-white text-rose-600', submit: 'from-orange-400 to-rose-500',
+  },
+  3000: {
+    card: 'border-violet-200 bg-gradient-to-br from-violet-50 to-pink-50', amount: 'text-violet-600', selected: 'bg-violet-600 text-white shadow-md', idle: 'border border-violet-200 bg-white text-violet-600', submit: 'from-violet-500 to-rose-500',
   },
 } as const
 
@@ -176,7 +182,7 @@ export function CommentsSheet({
               <SuperChatIcon className="size-6" />
               <p className="text-sm font-black">応援金額を選択</p>
             </div>
-            <div className="mt-3 grid grid-cols-3 gap-2">
+            <div className="mt-3 grid grid-cols-2 gap-2">
               {tipOptions.map((amount) => (
                 <button
                   aria-pressed={selectedTip === amount}

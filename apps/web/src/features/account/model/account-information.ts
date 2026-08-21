@@ -12,10 +12,6 @@ export const accountInformationFormSchema = z.object({
     .trim()
     .min(1, 'ユーザー名を入力してください。')
     .max(30, 'ユーザー名は30文字以内で入力してください。'),
-  email: z
-    .string()
-    .trim()
-    .pipe(z.email('有効なメールアドレスを入力してください。')),
   bio: z
     .string()
     .trim()

@@ -43,7 +43,7 @@ export const createCommentSchema = z.object({
     .trim()
     .min(1, 'コメントを入力してください。')
     .max(200, 'コメントは200文字以内で入力してください。'),
-  tipAmount: z.union([z.literal(0), z.literal(100), z.literal(300), z.literal(500)]),
+  tipAmount: z.number().int().refine((amount) => amount === 0 || (amount >= 100 && amount <= 3000), '100円〜3,000円で指定してください。'),
 })
 
 export type FeedComment = z.infer<typeof feedCommentSchema>

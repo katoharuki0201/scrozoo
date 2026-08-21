@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, isNull, or } from "drizzle-orm";
 import { Hono } from "hono";
 
 import { getApiEnv } from "../config/env";
@@ -92,10 +92,10 @@ publisher.delete("/publisher/videos/:videoId", async (c) => {
 publisher.get("/creator/supporters", async (c) => {
   const owner = await ownedZoo(c.get("session")!.user.id);
   if (!owner) return c.json({ totalCount: 0, monthlySupportAmount: 0, supporters: [] });
-  const rows = await db.select({ id: user.id, name: user.name, joinedAt: subscription.createdAt, nextRenewalDate: subscription.currentPeriodEnd, status: subscription.status })
+  const rows = await db.select({ id: user.id, name: user.name, avatarUrl: user.image, joinedAt: subscription.createdAt, nextRenewalDate: subscription.currentPeriodEnd, status: subscription.status })
     .from(subscription).innerJoin(user, eq(subscription.userId, user.id))
-    .where(and(eq(subscription.zooId, owner.id), inArray(subscription.status, ["active", "canceling"]))).orderBy(desc(subscription.createdAt));
-  const supporters = rows.map((row) => ({ id: row.id, name: row.name, initials: initials(row.name), joinedAt: row.joinedAt.toISOString().slice(0, 10), nextRenewalDate: (row.nextRenewalDate ?? row.joinedAt).toISOString().slice(0, 10), status: row.status === "canceling" ? "cancel_scheduled" as const : "active" as const }));
+    .where(and(eq(subscription.zooId, owner.id), inArray(subscription.status, ["active", "canceling"]), or(isNull(subscription.currentPeriodEnd), gt(subscription.currentPeriodEnd, new Date())))).orderBy(desc(subscription.createdAt));
+  const supporters = rows.map((row) => ({ id: row.id, name: row.name, avatarUrl: row.avatarUrl, initials: initials(row.name), joinedAt: row.joinedAt.toISOString().slice(0, 10), nextRenewalDate: (row.nextRenewalDate ?? row.joinedAt).toISOString().slice(0, 10), status: row.status === "canceling" ? "cancel_scheduled" as const : "active" as const }));
   return c.json({ totalCount: supporters.length, monthlySupportAmount: supporters.length * 500, supporters });
 });
 

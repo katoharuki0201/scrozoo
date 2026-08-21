@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, isNull, or } from "drizzle-orm";
 import { Hono } from "hono";
 
 import { db } from "../db";
@@ -26,7 +26,7 @@ mockPayments.get("/profiles/me/support-plans", requireAuth, async (c) => {
   }).from(subscription)
     .innerJoin(zoo, eq(subscription.zooId, zoo.id))
     .leftJoin(mediaAsset, eq(zoo.profileMediaAssetId, mediaAsset.id))
-    .where(and(eq(subscription.userId, session.user.id), inArray(subscription.status, ["active", "canceling"])))
+    .where(and(eq(subscription.userId, session.user.id), inArray(subscription.status, ["active", "canceling"]), or(isNull(subscription.currentPeriodEnd), gt(subscription.currentPeriodEnd, new Date()))))
     .orderBy(desc(subscription.createdAt));
 
   return c.json(rows.map((row) => ({
@@ -55,12 +55,14 @@ mockPayments.post("/support-plans/:planId/cancel", requireAuth, async (c) => {
 });
 
 mockPayments.post("/videos/:videoId/tip-checkout", requireAuth, async (c) => {
+  const session = c.get("session")!;
+  if (session.user.role === "creator") return c.json({ error: { code: "FORBIDDEN", message: "投稿者は投げ銭できません" } }, 403);
   const body = await c.req.json<unknown>().catch(() => null);
   if (!body || typeof body !== "object" || !("amount" in body) || !("comment" in body) || typeof body.amount !== "number" || typeof body.comment !== "string") {
     return c.json({ error: { code: "VALIDATION_ERROR", message: "投げ銭内容を確認してください" } }, 422);
   }
   const comment = body.comment.trim();
-  if (![100, 300, 500].includes(body.amount) || !comment || comment.length > 200) return c.json({ error: { code: "VALIDATION_ERROR", message: "投げ銭内容を確認してください" } }, 422);
+  if (!Number.isInteger(body.amount) || body.amount < 100 || body.amount > 3000 || !comment || comment.length > 200) return c.json({ error: { code: "VALIDATION_ERROR", message: "投げ銭内容を確認してください" } }, 422);
   const [target] = await db.select({ id: video.id }).from(video).where(and(eq(video.id, c.req.param("videoId")), eq(video.status, "published"))).limit(1);
   if (!target) return c.json({ error: { code: "NOT_FOUND", message: "動画が見つかりません" } }, 404);
   return c.json({ checkoutUrl: resolveMockPaymentUrl(), mode: "mock" as const });

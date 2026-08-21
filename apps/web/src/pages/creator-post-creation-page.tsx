@@ -1,10 +1,11 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router'
 import { useAuth } from '../features/auth/hooks/use-auth'
 import { createCreatorPost } from '../features/creator-post/api/creator-post-api'
+import { creatorAnimalsQueryOptions } from '../features/creator-post/api/creator-animals-api'
 import {
   creatorPostFormSchema,
   parseTags,
@@ -25,12 +26,13 @@ export function CreatorPostCreationPage() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const animalsQuery = useQuery(creatorAnimalsQueryOptions)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [uploadProgress, setUploadProgress] = useState(0)
   const uploadAbortRef = useRef<AbortController | null>(null)
   const form = useForm<CreatorPostFormValues>({
     resolver: zodResolver(creatorPostFormSchema),
-    defaultValues: { caption: '', tagsText: '' },
+    defaultValues: { animalId: '', caption: '', tagsText: '' },
   })
   const videoField = form.register('video')
   const caption = useWatch({ control: form.control, name: 'caption' }) ?? ''
@@ -115,6 +117,14 @@ export function CreatorPostCreationPage() {
 
         <form className="mt-5 space-y-6" noValidate onSubmit={form.handleSubmit((values) => postMutation.mutate(values))}>
           <section>
+            <label className="text-sm font-black text-slate-700" htmlFor="creator-post-animal">対象の動物</label>
+            <select {...form.register('animalId')} className="mt-2 h-14 w-full rounded-2xl bg-slate-200 px-4 text-base" id="creator-post-animal">
+              <option value="">選択してください</option>
+              {animalsQuery.data?.map((animal) => <option key={animal.id} value={animal.id}>{animal.name}（{animal.species}）</option>)}
+            </select>
+            {form.formState.errors.animalId && <p className="mt-2 text-sm font-bold text-red-600" role="alert">{form.formState.errors.animalId.message}</p>}
+          </section>
+          <section>
             <p className="text-sm font-black text-slate-700">動画</p>
             {previewUrl ? (
               <div className="relative mx-auto mt-3 aspect-[9/16] max-h-[48dvh] overflow-hidden rounded-3xl bg-black shadow-lg">
@@ -127,12 +137,21 @@ export function CreatorPostCreationPage() {
               <label className="mt-3 flex min-h-52 cursor-pointer flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-300 bg-white px-6 text-center active:bg-slate-100" htmlFor="creator-post-video">
                 <span className="grid size-14 place-items-center rounded-full bg-slate-900 text-white"><UploadIcon className="size-7" /></span>
                 <span className="mt-4 text-base font-black text-slate-800">投稿する動画を選択</span>
-                <span className="mt-2 text-xs leading-5 text-slate-500">MP4・WebMなど / 最大200MB</span>
+                <span className="mt-2 text-xs leading-5 text-slate-500">MP4・WebM・MOV / 最大200MB</span>
               </label>
             )}
             <input {...videoField} accept="video/mp4,video/webm,video/quicktime" className="sr-only" id="creator-post-video" onChange={selectVideo} type="file" />
+            <input accept="video/mp4,video/webm,video/quicktime" capture="environment" className="sr-only" id="creator-post-camera" onChange={(event) => {
+              const file = event.target.files?.[0]
+              if (!file) return
+              form.setValue('video', file, { shouldValidate: true })
+              setPreviewUrl(URL.createObjectURL(file))
+            }} type="file" />
             {form.formState.errors.video && <p className="mt-2 text-sm font-bold text-red-600" role="alert">{form.formState.errors.video.message}</p>}
-            {previewUrl && <label className="mt-3 flex h-11 cursor-pointer items-center justify-center rounded-xl bg-slate-200 text-sm font-bold text-slate-700" htmlFor="creator-post-video">別の動画を選択</label>}
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              <label className="flex h-11 cursor-pointer items-center justify-center rounded-xl bg-slate-200 text-sm font-bold text-slate-700" htmlFor="creator-post-camera">カメラで撮影</label>
+              <label className="flex h-11 cursor-pointer items-center justify-center rounded-xl bg-slate-200 text-sm font-bold text-slate-700" htmlFor="creator-post-video">ファイルを選択</label>
+            </div>
           </section>
 
           <section>
