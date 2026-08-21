@@ -25,6 +25,21 @@ bun run db:migrate
 ADMIN_NAME="SCROZOO管理者" ADMIN_EMAIL="admin@example.com" ADMIN_PASSWORD="replace-me" bun run admin:create
 ```
 
+## 開発用アカウント
+
+マイグレーション後、管理者とクリエイターの確認用アカウントを作成できます。
+
+```sh
+bun run db:seed:dev-accounts
+```
+
+| 種別 | メールアドレス | パスワード |
+| --- | --- | --- |
+| 管理者 | `admin@scrozoo.jp` | `admin1234` |
+| クリエイター | `creator@scrozoo.jp` | `creator1234` |
+
+クリエイターには「開発用動物園」も作成されます。コマンドは再実行可能で、既存アカウントのパスワードは上書きしません。値を変更する場合は `DEV_ADMIN_EMAIL`、`DEV_ADMIN_PASSWORD`、`DEV_CREATOR_EMAIL`、`DEV_CREATOR_PASSWORD` を設定してください。本番環境（`NODE_ENV=production`）では実行できません。
+
 ## 認証スキーマ生成
 
 `src/auth.ts` の設定から `src/db/auth-schema.ts` を生成します。

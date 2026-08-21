@@ -8,6 +8,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "admin:create": "bun run src/scripts/create-admin.ts",
+    "db:seed:dev-accounts": "bun run src/db/seed-dev-accounts.ts",
     "auth:generate": "bun x auth@latest generate --output ./src/db/auth-schema.ts --yes"
   },
   "dependencies": {
