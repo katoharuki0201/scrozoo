@@ -88,53 +88,53 @@ MSW で実装されているフロントエンド向け API を、Hono、Better 
 
 - [ ] Google OAuth の `GOOGLE_CLIENT_ID` と `GOOGLE_CLIENT_SECRET` を本番環境へ設定する。
 - [ ] Google OAuth のコールバック URL を Google Cloud Console へ登録する。
-- [ ] 登録時に `user_profile` を自動作成する DB hook または初期化処理を追加する。
-- [ ] `viewer`、`creator`、`admin` のロール名を DB、Better Auth、フロントで統一する。
-- [ ] メールアドレス変更時の再認証・確認メール方針を決める。
-- [ ] パスワード再設定メール送信を実装する。
-- [ ] 退会 API と「退会済みユーザー」への表示名変更を実装する。
+- [x] 登録時に `user_profile` を自動作成する DB hook または初期化処理を追加する。
+- [x] `viewer`、`creator`、`admin` のロール名を DB、Better Auth、フロントで統一する。
+- [x] メールアドレス変更は現行画面との互換性を保つ暫定仕様とし、本番提供前に確認メール方式へ移行する。
+- [x] Resend を使ったパスワード再設定メール送信を実装する。
+- [x] 退会 API と「退会済みユーザー」への表示名変更を実装する。
 
 ## P1: フィード・検索・プロフィールの完成
 
-- [ ] `GET /api/feed` の N+1 クエリを集約クエリまたはバッチ取得へ変更する。
-- [ ] 動画の再生回数カラムまたは集計テーブルを追加し、現在の固定値 `0` を廃止する。
-- [ ] 動画のサムネイル時刻またはサムネイル画像を DB で管理する。
-- [ ] 動物園アバターの固定値 `/icon.jpg` を R2 のメディア URL へ置き換える。
-- [ ] フィードにカーソルページングと `limit` 上限を追加する。
-- [ ] 検索を DB クエリ化し、動物名、種、動物園名、タグを対象にする。
-- [ ] プロフィールのギャラリー投稿を DB から返す。
-- [ ] 動物園プロフィールの動画数、サポーター数を正しく集計する。
-- [ ] お気に入りの追加と削除を `PUT` / `DELETE` に分けるか、現行 toggle API を正式仕様にするか決める。
+- [x] `GET /api/feed` の N+1 DBクエリをバッチ取得へ変更する。
+- [x] 動画の再生回数カラムを追加し、固定値 `0` を廃止する。
+- [x] 動画のサムネイル時刻を DB で管理する。
+- [x] 動物園アバターを R2 のメディア URL へ置き換え、未設定時のみ既定画像を使う。
+- [x] フィードに既存の配列レスポンスを維持した `cursor` と最大50件の `limit` を追加する。
+- [x] 検索を DB クエリ化し、動物名、種、動物園名、タグを対象にする。
+- [x] プロフィールのギャラリー投稿を DB から返す。
+- [x] 動物園プロフィールの動画数、サポーター数を正しく集計する。
+- [x] フロント最小差分のため、現行 `POST /api/feed/:videoId/like` toggle API を正式仕様とする。
 
 ## P1: 投稿者 API
 
-- [ ] `GET /api/publisher/zoo`
-- [ ] `PATCH /api/publisher/zoo`
-- [ ] `GET /api/publisher/animals`
-- [ ] `POST /api/publisher/animals`
-- [ ] `PATCH /api/publisher/animals/:animalId`
-- [ ] `GET /api/publisher/videos`
+- [x] `GET /api/publisher/zoo`
+- [x] `PATCH /api/publisher/zoo`
+- [x] `GET /api/publisher/animals`
+- [x] `POST /api/publisher/animals`
+- [x] `PATCH /api/publisher/animals/:animalId`
+- [x] `GET /api/publisher/videos`
 - [x] `POST /api/creator/posts`（既存フロント契約を維持）
   - `ready` の動画とプレビューメディアのみ指定可
   - セッションの動物園以外のメディアは指定不可
-- [ ] `PATCH /api/publisher/videos/:videoId`
-- [ ] `DELETE /api/publisher/videos/:videoId`
-- [ ] `GET /api/creator/supporters` または `GET /api/publisher/supporters`
-- [ ] `GET /api/publisher/visit-qr`
+- [x] `PATCH /api/publisher/videos/:videoId`
+- [x] `DELETE /api/publisher/videos/:videoId`
+- [x] `GET /api/creator/supporters`（既存フロント契約）
+- [x] `GET /api/publisher/visit-qr`
 - [x] 現行フロントの `POST /api/creator/posts` を新しいアップロードフローへ置き換える。
 
 ## P1: QR 認証とギャラリー
 
-- [ ] QR トークンの署名・検証方式と有効期限を決定する。
-- [ ] DB に保存するのは QR トークン本文ではなくハッシュにする。
-- [ ] `POST /api/qr/verify`
-- [ ] `GET /api/qr/sessions/:sessionId`
-- [ ] `POST /api/gallery/posts`
+- [x] QR トークンは暗号学的乱数で生成し、発行QRは24時間、検証後の投稿権限は2時間有効とする。
+- [x] DB に保存するのは QR トークン本文ではなく SHA-256 ハッシュにする。
+- [x] `POST /api/qr/verify`
+- [x] `GET /api/qr/sessions/:sessionId`
+- [x] `POST /api/gallery/posts`
   - `ready` の `galleryImage` メディアのみ指定可
   - セッションのユーザーが所有する画像のみ指定可
   - 有効期間内の `visit_permit` を必須にする
-- [ ] セッションの二重使用を禁止する場合は DB で一意制約を追加する。
-- [ ] 動物園別・ユーザー別ギャラリー一覧 API を実装する。
+- [x] 2時間の来園許可中は複数枚投稿できる仕様とし、セッションの二重使用は禁止しない。
+- [x] 既存フロント契約に合わせ、`GET /api/zoos/:zooId/profile` と `GET /api/profiles/me` から動物園別・ユーザー別ギャラリーを返す。
 
 ## P2: 応援目標
 

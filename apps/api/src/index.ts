@@ -10,6 +10,8 @@ import { content } from './routes/content'
 import { uploads } from './routes/uploads'
 import { getApiEnv } from './config/env'
 import { creatorPosts } from './routes/creator-posts'
+import { publisher } from './routes/publisher'
+import { visits } from './routes/visits'
 
 getApiEnv()
 
@@ -42,6 +44,8 @@ app.route('/api', profiles)
 app.route('/api', content)
 app.route('/api', uploads)
 app.route('/api', creatorPosts)
+app.route('/api', publisher)
+app.route('/api', visits)
 
 app.get('/', (c) => {
   return c.text('Scrozoo API')

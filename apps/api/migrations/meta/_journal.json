@@ -15,6 +15,20 @@
       "when": 1787115308765,
       "tag": "0001_striped_bloodstorm",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1787269807791,
+      "tag": "0002_natural_frightful_four",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1787270090978,
+      "tag": "0003_lumpy_mentor",
+      "breakpoints": true
     }
   ]
 }

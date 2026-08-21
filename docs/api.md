@@ -75,9 +75,8 @@ Better Auth の handler を `/api/auth/*` にマウントする。
 | `GET` | `/api/videos/:videoId` | 不要 | 動画詳細と視聴可能な URL |
 | `GET` | `/api/videos/:videoId/comments` | 不要 | コメント一覧 |
 | `POST` | `/api/videos/:videoId/comments` | 必須 | 通常コメントを投稿 |
-| `PUT` | `/api/videos/:videoId/favorite` | 必須 | お気に入り追加 |
-| `DELETE` | `/api/videos/:videoId/favorite` | 必須 | お気に入り解除 |
-| `GET` | `/api/me/favorites` | 必須 | お気に入り動画一覧 |
+| `POST` | `/api/feed/:videoId/like` | 必須 | お気に入り状態を切り替える（既存フロント契約） |
+| `GET` | `/api/favorites` | 必須 | お気に入り動画一覧（既存フロント契約） |
 
 `GET /api/videos` は `q`、`zooId`、`animalId`、`species`、`tag`、`cursor`、`limit` を受け取る。
 
