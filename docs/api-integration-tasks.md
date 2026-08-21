@@ -163,20 +163,20 @@ MSW で実装されているフロントエンド向け API を、Hono、Better 
 
 ## P2: 管理画面 API
 
-- [ ] 管理者認証を Better Auth の `admin` ロールまたは admin plugin で実装する。
-- [ ] `POST /api/admin/auth/login`
-- [ ] `GET /api/admin/auth/session`
-- [ ] `POST /api/admin/auth/logout`
-- [ ] `GET /api/admin/dashboard`
-- [ ] `GET /api/admin/users`
-- [ ] `GET /api/admin/subscribers`
-- [ ] `GET /api/admin/revenue`
-- [ ] `GET /api/admin/creators`
-- [ ] `POST /api/admin/creators`
-- [ ] `PATCH /api/admin/creators/:creatorId/status`
-- [ ] 投稿者発行に必要な担当者名、状態、発行日の DB スキーマを追加する。
-- [ ] 停止された投稿者の既存セッションを失効させる。
-- [ ] 仮パスワードを平文で DB へ保存しない。
+- [x] 管理者認証を Better Auth の `admin` ロールまたは admin plugin で実装する。
+- [x] `POST /api/admin/auth/login`
+- [x] `GET /api/admin/auth/session`
+- [x] `POST /api/admin/auth/logout`
+- [x] `GET /api/admin/dashboard`
+- [x] `GET /api/admin/users`
+- [x] `GET /api/admin/subscribers`
+- [x] `GET /api/admin/revenue`
+- [x] `GET /api/admin/creators`
+- [x] `POST /api/admin/creators`
+- [x] `PATCH /api/admin/creators/:creatorId/status`
+- [x] 投稿者発行に必要な担当者名、状態、発行日の DB スキーマを追加する。
+- [x] 停止された投稿者の既存セッションを失効させる。
+- [x] 仮パスワードを平文で DB へ保存しない。
 
 ## P3: サポーターチャット
 
