@@ -107,16 +107,7 @@ Better Auth の handler を `/api/auth/*` にマウントする。
 
 `POST /api/visits/verify` は `token` を受け取り、`visitPermitId`、`zooId`、`expiresAt` を返す。
 
-## 8. サポーターチャット
-
-| メソッド | パス | 認証 | 用途 |
-| --- | --- | --- | --- |
-| `GET` | `/api/zoos/:zooId/chat/messages` | 加入者・投稿者 | 新着メッセージをポーリング取得 |
-| `POST` | `/api/zoos/:zooId/chat/messages` | 加入者・投稿者 | テキストメッセージを投稿 |
-
-GET は `after`、`cursor`、`limit` を受け取る。メッセージは最大500文字とする。
-
-## 9. R2 アップロード
+## 8. R2 アップロード
 
 | メソッド | パス | 認証 | 用途 |
 | --- | --- | --- | --- |
@@ -125,7 +116,7 @@ GET は `after`、`cursor`、`limit` を受け取る。メッセージは最大5
 
 `POST /api/uploads` は `purpose`（`avatar`、`zooProfile`、`animalProfile`、`video`、`videoPreview`、`galleryImage`）、`contentType`、`size`、`fileName` を受け取る。ロール、形式、サイズ、R2 使用量を検査してから URL を発行する。フロントエンドは返された `headers` を付けてR2へ直接PUTし、その後に完了APIを呼ぶ。
 
-## 10. 投稿者向け API
+## 9. 投稿者向け API
 
 動物園アカウントのみ利用できる。対象はセッションの動物園に限定し、リクエストの `zooId` は信頼しない。
 
@@ -143,14 +134,14 @@ GET は `after`、`cursor`、`limit` を受け取る。メッセージは最大5
 | `GET` | `/api/publisher/supporters` | プラン加入者と投げ銭利用者 |
 | `GET` | `/api/publisher/visit-qr` | 来園認証 URL と QR 表示用情報 |
 
-## 11. 運用確認
+## 10. 運用確認
 
 | メソッド | パス | 用途 |
 | --- | --- | --- |
 | `GET` | `/api/health` | Hono API の起動確認 |
 | `GET` | `/api/ready` | Turso、R2 など必須依存先の接続確認 |
 
-## 12. 実装順序
+## 11. 実装順序
 
 1. 共通エラー、認証、`/api/me`
 2. 動物園、動物、動画の参照 API
@@ -158,4 +149,4 @@ GET は `after`、`cursor`、`limit` を受け取る。メッセージは最大5
 4. コメント、お気に入り、公開プロフィール
 5. Stripe Sandbox、応援プラン、投げ銭、サポートログ
 6. QR 認証とギャラリー
-7. サポーターチャットとサポーター一覧
+7. サポーター一覧
