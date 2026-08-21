@@ -69,8 +69,8 @@ export function QrScanPage() {
       },
       {
         preferredCamera: 'environment',
-        highlightScanRegion: true,
-        highlightCodeOutline: true,
+        highlightScanRegion: false,
+        highlightCodeOutline: false,
         returnDetailedScanResult: true,
         maxScansPerSecond: 10,
       },
