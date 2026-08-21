@@ -42,9 +42,11 @@ export function CreatorPostCreationPage() {
   }, [previewUrl])
 
   function selectVideo(event: ChangeEvent<HTMLInputElement>) {
-    void videoField.onChange(event)
     const file = event.target.files?.[0]
-    setPreviewUrl(file ? URL.createObjectURL(file) : null)
+    if (!file) return
+
+    form.setValue('video', file, { shouldDirty: true, shouldValidate: true })
+    setPreviewUrl(URL.createObjectURL(file))
   }
 
   function removeVideo() {
@@ -131,12 +133,7 @@ export function CreatorPostCreationPage() {
               </label>
             )}
             <input {...videoField} accept="video/mp4,video/webm,video/quicktime" className="sr-only" id="creator-post-video" onChange={selectVideo} type="file" />
-            <input accept="video/mp4,video/webm,video/quicktime" capture="environment" className="sr-only" id="creator-post-camera" onChange={(event) => {
-              const file = event.target.files?.[0]
-              if (!file) return
-              form.setValue('video', file, { shouldValidate: true })
-              setPreviewUrl(URL.createObjectURL(file))
-            }} type="file" />
+            <input accept="video/mp4,video/webm,video/quicktime" capture="environment" className="sr-only" id="creator-post-camera" onChange={selectVideo} type="file" />
             {form.formState.errors.video && <p className="mt-2 text-sm font-bold text-red-600" role="alert">{form.formState.errors.video.message}</p>}
             <div className="mt-3 grid grid-cols-2 gap-3">
               <label className="flex h-11 cursor-pointer items-center justify-center rounded-xl bg-slate-200 text-sm font-bold text-slate-700" htmlFor="creator-post-camera">カメラで撮影</label>
