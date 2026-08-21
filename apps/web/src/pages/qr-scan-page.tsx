@@ -4,9 +4,6 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { verifyQrCode } from '../features/qr/api/qr-api'
 import { BottomNavigation } from '../shared/ui/bottom-navigation'
-import { QrCodeIcon } from '../shared/ui/icons'
-
-const DEMO_QR_PAYLOAD = 'scrozoo:visit:higashiyama:demo-2026'
 
 export function QrScanPage() {
   const navigate = useNavigate()
@@ -20,7 +17,11 @@ export function QrScanPage() {
   async function startScanner(scanner: QrScanner, errorMessage: string) {
     try {
       await scanner.start()
-      if (scannerRef.current === scanner) setCameraError(null)
+      if (scannerRef.current !== scanner) return
+
+      const video = videoRef.current
+      if (video?.srcObject) await video.play()
+      setCameraError(null)
     } catch {
       if (scannerRef.current === scanner) setCameraError(errorMessage)
     }
@@ -76,7 +77,9 @@ export function QrScanPage() {
     )
     scannerRef.current = scanner
 
-    void startScanner(scanner, 'カメラを起動できません。カメラの使用を許可してください。')
+    const startTimer = window.setTimeout(() => {
+      void startScanner(scanner, 'カメラを起動できません。カメラの使用を許可してください。')
+    }, 0)
 
     function handleVisibilityChange() {
       if (document.visibilityState === 'hidden') {
@@ -89,18 +92,12 @@ export function QrScanPage() {
     document.addEventListener('visibilitychange', handleVisibilityChange)
 
     return () => {
+      window.clearTimeout(startTimer)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
       if (scannerRef.current === scanner) scannerRef.current = null
       scanner.destroy()
     }
   }, [payloadFromUrl])
-
-  function scanDemoQr() {
-    handledRef.current = true
-    scannerRef.current?.stop()
-    setCameraError(null)
-    verification.mutate(DEMO_QR_PAYLOAD)
-  }
 
   function retryCamera() {
     handledRef.current = false
@@ -141,12 +138,6 @@ export function QrScanPage() {
           </div>
         )}
 
-        {import.meta.env.DEV && (
-          <button className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-white/30 bg-black/45 text-sm font-bold backdrop-blur-sm" disabled={verification.isPending} onClick={scanDemoQr} type="button">
-            <QrCodeIcon className="size-5" />
-            デモ用QRを読み取る
-          </button>
-        )}
       </div>
 
       <BottomNavigation />
