@@ -12,7 +12,6 @@ export function parseTags(value: string) {
 }
 
 export const creatorPostFormSchema = z.object({
-  animalId: z.string().min(1, '対象の動物を選択してください。'),
   video: z
     .instanceof(File, { error: '投稿する動画を選択してください。' })
     .refine((file) => ['video/mp4', 'video/webm', 'video/quicktime'].includes(file.type), 'MP4・WebM・MOV動画を選択してください。')

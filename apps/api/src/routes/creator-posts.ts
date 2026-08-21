@@ -32,9 +32,7 @@ creatorPosts.post("/creator/posts", requirePublisher, async (c) => {
   const [selectedAnimal] = await db.select({ id: animal.id }).from(animal).where(and(
     eq(animal.zooId, ownedZoo.id),
     eq(animal.status, "active"),
-    typeof input.animalId === "string" ? eq(animal.id, input.animalId) : undefined,
   )).limit(1);
-  if (!selectedAnimal) return c.json({ error: { code: "ANIMAL_NOT_FOUND", message: "投稿対象の動物が登録されていません" } }, 422);
 
   const assets = await db.select().from(mediaAsset).where(eq(mediaAsset.uploaderUserId, session.user.id));
   const full = assets.find((item) => item.id === input.videoUploadId && item.purpose === "video" && item.status === "ready");
@@ -42,12 +40,22 @@ creatorPosts.post("/creator/posts", requirePublisher, async (c) => {
   if (!full || !preview) return c.json({ error: { code: "MEDIA_NOT_READY", message: "アップロード済み動画を確認できません" } }, 422);
 
   const id = crypto.randomUUID();
+  const animalId = selectedAnimal?.id ?? crypto.randomUUID();
   const publishedAt = new Date();
   await db.transaction(async (tx) => {
+    if (!selectedAnimal) {
+      await tx.insert(animal).values({
+        id: animalId,
+        zooId: ownedZoo.id,
+        name: "動物園の仲間たち",
+        species: "動物",
+        status: "active",
+      });
+    }
     await tx.insert(video).values({
       id,
       zooId: ownedZoo.id,
-      animalId: selectedAnimal.id,
+      animalId,
       authorUserId: session.user.id,
       fullMediaAssetId: full.id,
       previewMediaAssetId: preview.id,

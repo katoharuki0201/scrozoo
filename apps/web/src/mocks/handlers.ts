@@ -211,7 +211,6 @@ const creatorPostMetadataSchema = z.object({
   durationMs: z.number().int().positive().max(60_000),
   caption: z.string().trim().min(1).max(120),
   tags: z.array(z.string().trim().min(1).max(20)).max(5),
-  animalId: z.string().min(1),
 })
 
 const defaultBio = '【動物動画の鑑賞垢】動物たちの可愛い姿や面白いハプニング動画を見て日々癒やされています。もふもふ系の動画に無言いいね多めです。素敵な投稿いつもありがとうございます！'

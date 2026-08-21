@@ -32,7 +32,6 @@ export async function createCreatorPost(values: CreatorPostFormValues, options: 
       videoUploadId: fullUpload.uploadId,
       previewUploadId: previewUpload.uploadId,
       durationMs,
-      animalId: values.animalId,
       caption: values.caption.trim(),
       tags: parseTags(values.tagsText),
     }, { signal: options.signal }),

@@ -1,11 +1,10 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router'
 import { useAuth } from '../features/auth/hooks/use-auth'
 import { createCreatorPost } from '../features/creator-post/api/creator-post-api'
-import { creatorAnimalsQueryOptions } from '../features/creator-post/api/creator-animals-api'
 import {
   creatorPostFormSchema,
   parseTags,
@@ -26,13 +25,12 @@ export function CreatorPostCreationPage() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const animalsQuery = useQuery(creatorAnimalsQueryOptions)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [uploadProgress, setUploadProgress] = useState(0)
   const uploadAbortRef = useRef<AbortController | null>(null)
   const form = useForm<CreatorPostFormValues>({
     resolver: zodResolver(creatorPostFormSchema),
-    defaultValues: { animalId: '', caption: '', tagsText: '' },
+    defaultValues: { caption: '', tagsText: '' },
   })
   const videoField = form.register('video')
   const caption = useWatch({ control: form.control, name: 'caption' }) ?? ''
@@ -116,14 +114,6 @@ export function CreatorPostCreationPage() {
         </header>
 
         <form className="mt-5 space-y-6" noValidate onSubmit={form.handleSubmit((values) => postMutation.mutate(values))}>
-          <section>
-            <label className="text-sm font-black text-slate-700" htmlFor="creator-post-animal">対象の動物</label>
-            <select {...form.register('animalId')} className="mt-2 h-14 w-full rounded-2xl bg-slate-200 px-4 text-base" id="creator-post-animal">
-              <option value="">選択してください</option>
-              {animalsQuery.data?.map((animal) => <option key={animal.id} value={animal.id}>{animal.name}（{animal.species}）</option>)}
-            </select>
-            {form.formState.errors.animalId && <p className="mt-2 text-sm font-bold text-red-600" role="alert">{form.formState.errors.animalId.message}</p>}
-          </section>
           <section>
             <p className="text-sm font-black text-slate-700">動画</p>
             {previewUrl ? (
