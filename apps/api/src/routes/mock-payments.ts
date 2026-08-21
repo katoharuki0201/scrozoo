@@ -2,7 +2,7 @@ import { and, desc, eq, gt, inArray, isNull, or, sql } from "drizzle-orm";
 import { Hono } from "hono";
 
 import { db } from "../db";
-import { mediaAsset, subscription, subscriptionEvent, supportGoal, video, zoo } from "../db/schema";
+import { comment, mediaAsset, subscription, subscriptionEvent, supportGoal, tip, video, zoo } from "../db/schema";
 import { requireAuth, type AuthEnv } from "../middleware/auth";
 import { resolveMockPaymentUrl } from "../lib/mock-payment";
 
@@ -11,6 +11,10 @@ const mockPayments = new Hono<AuthEnv>();
 function publicMediaUrl(objectKey: string | null) {
   if (!objectKey) return "/icon.jpg";
   return `${process.env.MEDIA_PUBLIC_BASE_URL?.replace(/\/+$/, "") ?? ""}/${objectKey}`;
+}
+
+function initials(name: string) {
+  return name.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase();
 }
 
 mockPayments.get("/profiles/me/support-plans", requireAuth, async (c) => {
@@ -78,11 +82,23 @@ mockPayments.post("/videos/:videoId/tip-checkout", requireAuth, async (c) => {
   if (!body || typeof body !== "object" || !("amount" in body) || !("comment" in body) || typeof body.amount !== "number" || typeof body.comment !== "string") {
     return c.json({ error: { code: "VALIDATION_ERROR", message: "投げ銭内容を確認してください" } }, 422);
   }
-  const comment = body.comment.trim();
-  if (!Number.isInteger(body.amount) || body.amount < 100 || body.amount > 3000 || !comment || comment.length > 200) return c.json({ error: { code: "VALIDATION_ERROR", message: "投げ銭内容を確認してください" } }, 422);
-  const [target] = await db.select({ id: video.id }).from(video).where(and(eq(video.id, c.req.param("videoId")), eq(video.status, "published"))).limit(1);
+  const commentText = body.comment.trim();
+  if (!Number.isInteger(body.amount) || body.amount < 100 || body.amount > 3000 || !commentText || commentText.length > 200) return c.json({ error: { code: "VALIDATION_ERROR", message: "投げ銭内容を確認してください" } }, 422);
+  const amount = body.amount;
+  const [target] = await db.select({ id: video.id, zooId: video.zooId, animalId: video.animalId }).from(video).where(and(eq(video.id, c.req.param("videoId")), eq(video.status, "published"))).limit(1);
   if (!target) return c.json({ error: { code: "NOT_FOUND", message: "動画が見つかりません" } }, 404);
-  return c.json({ checkoutUrl: resolveMockPaymentUrl(), mode: "mock" as const });
+  const now = new Date();
+  const commentId = crypto.randomUUID();
+  await db.transaction(async (tx) => {
+    await tx.insert(comment).values({ id: commentId, videoId: target.id, userId: session.user.id, body: commentText, supporterAtPosting: true });
+    await tx.insert(tip).values({ id: crypto.randomUUID(), userId: session.user.id, zooId: target.zooId, animalId: target.animalId, videoId: target.id, commentId, commentBody: commentText, amount, status: "succeeded", idempotencyKey: `mock-${crypto.randomUUID()}`, succeededAt: now });
+    await tx.update(supportGoal).set({ currentAmount: sql`${supportGoal.currentAmount} + ${amount}`, updatedAt: now }).where(and(eq(supportGoal.zooId, target.zooId), isNull(supportGoal.archivedAt)));
+  });
+  return c.json({
+    checkoutUrl: resolveMockPaymentUrl(),
+    mode: "mock" as const,
+    comment: { id: commentId, author: { name: session.user.name, initials: initials(session.user.name) }, message: commentText, isSupporter: true, tipAmount: amount, createdAt: now.toISOString() },
+  });
 });
 
 export { mockPayments };

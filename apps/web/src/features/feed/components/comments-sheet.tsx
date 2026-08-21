@@ -200,7 +200,6 @@ export function CommentsSheet({
               ))}
             </div>
           </div>
-          <p className="mt-3 text-xs font-bold leading-5 text-rose-600">Stripeのテストページへ移動します。実際の請求やコメント確定は行われません。</p>
           <label className="mt-4 block text-xs font-bold text-slate-600" htmlFor="superchat-message">
             応援コメント
           </label>
@@ -222,7 +221,7 @@ export function CommentsSheet({
             disabled={createComment.isPending}
             type="submit"
           >
-            {createComment.isPending ? '移動中...' : `${selectedTip}円のテスト決済へ進む`}
+            {createComment.isPending ? '送信中...' : `${selectedTip}円の応援を送る`}
           </button>
         </form>
       ) : (
@@ -273,7 +272,7 @@ export function CommentsSheet({
                 />
                 <button
                   aria-label="スパチャを送る"
-                  className="absolute top-1/2 right-1 grid size-9 -translate-y-1/2 place-items-center rounded-lg bg-gradient-to-br from-orange-400 to-rose-500 text-white shadow-sm"
+                  className="absolute top-1/2 right-1 grid size-9 -translate-y-1/2 place-items-center rounded-lg bg-slate-200 text-slate-600"
                   onClick={openSuperChatComposer}
                   type="button"
                 >

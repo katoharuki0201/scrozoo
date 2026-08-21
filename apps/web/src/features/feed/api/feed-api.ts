@@ -31,14 +31,27 @@ export async function createVideoComment(
   values: CreateCommentValues,
 ) {
   if (values.tipAmount > 0) {
-    const checkout = z.object({ checkoutUrl: z.url(), mode: z.literal('mock') }).parse(
-      await api.post<unknown>(`videos/${videoId}/tip-checkout`, {
-        amount: values.tipAmount,
-        comment: values.message,
-      }),
-    )
-    window.location.assign(checkout.checkoutUrl)
-    return new Promise<never>(() => undefined)
+    const checkoutWindow = window.open('', '_blank')
+    if (checkoutWindow) checkoutWindow.opener = null
+
+    try {
+      const checkout = z.object({
+        checkoutUrl: z.url(),
+        mode: z.literal('mock'),
+        comment: feedCommentSchema,
+      }).parse(
+        await api.post<unknown>(`videos/${videoId}/tip-checkout`, {
+          amount: values.tipAmount,
+          comment: values.message,
+        }),
+      )
+      if (checkoutWindow) checkoutWindow.location.href = checkout.checkoutUrl
+      else window.open(checkout.checkoutUrl, '_blank', 'noopener,noreferrer')
+      return checkout.comment
+    } catch (error) {
+      checkoutWindow?.close()
+      throw error
+    }
   }
   const response = await api.post<unknown>(`feed/${videoId}/comments`, values)
 

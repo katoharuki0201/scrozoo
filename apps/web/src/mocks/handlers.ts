@@ -1052,8 +1052,20 @@ export const handlers = [
     const account = accountByToken.get(getToken(request) ?? '')
     if (!account || account.role === 'creator') return HttpResponse.json({ message: 'Forbidden' }, { status: 403 })
     const result = z.object({ amount: z.number().int().min(100).max(3000), comment: z.string().trim().min(1).max(200) }).safeParse(await request.json())
-    if (!result.success || !mockVideos.some((video) => video.id === String(params.videoId))) return HttpResponse.json({ message: 'Invalid tip' }, { status: 422 })
-    return HttpResponse.json({ checkoutUrl: 'https://buy.stripe.com/test_7sYcN5b1wgAafpA8JwaMU00', mode: 'mock' })
+    const videoId = String(params.videoId)
+    const video = mockVideos.find((item) => item.id === videoId)
+    if (!result.success || !video) return HttpResponse.json({ message: 'Invalid tip' }, { status: 422 })
+    const comment = {
+      id: crypto.randomUUID(),
+      author: { name: account.name, initials: account.name.split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase() },
+      message: result.data.comment,
+      isSupporter: true,
+      tipAmount: result.data.amount,
+      createdAt: new Date().toISOString(),
+    }
+    getComments(videoId).unshift(comment)
+    addSupportGoalAmount(video.zoo.id, result.data.amount)
+    return HttpResponse.json({ checkoutUrl: 'https://buy.stripe.com/test_7sYcN5b1wgAafpA8JwaMU00', mode: 'mock', comment })
   }),
   http.post('*/api/support-plans/:planId/cancel', async ({ params, request }) => {
     await delay(500)
