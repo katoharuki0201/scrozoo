@@ -20,6 +20,7 @@ TechJam 2026 チームBの企画として開発しています。
 - [データベース設計](./docs/database-design.md)
 - [技術構成](./docs/architecture.md)
 - [決定事項](./docs/decisions.md)
+- [MVP 手動テストチェックリスト](./docs/manual-test-checklist.md)
 
 ## 技術スタック
 
