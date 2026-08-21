@@ -112,7 +112,8 @@ export function QrScanPage() {
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/80" />
 
       <header className="absolute inset-x-0 top-0 z-10 px-5 pt-[max(1.5rem,env(safe-area-inset-top))] text-center">
-        <h1 className="text-base font-bold text-white/90">QRコードを枠内に合わせてください</h1>
+        <h1 className="text-xl font-black">QRコードを読み取る</h1>
+        <p className="mt-2 text-sm text-white/75">QRコードを枠内に合わせてください</p>
       </header>
 
       <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 size-64 -translate-x-1/2 -translate-y-1/2 rounded-[2rem] border-2 border-white/80 shadow-[0_0_0_999px_rgba(0,0,0,0.18)]">
