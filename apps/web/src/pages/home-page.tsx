@@ -137,7 +137,24 @@ export function HomePage() {
           </div>
         )}
 
-        {feedQuery.data && (
+        {feedQuery.data?.length === 0 && (
+          <div className="grid h-full place-items-center px-8 text-center text-white">
+            <div className="max-w-xs">
+              <div className="mx-auto grid size-16 place-items-center rounded-full bg-white/10 text-3xl" aria-hidden="true">
+                🦁
+              </div>
+              <h1 className="mt-5 text-xl font-black">まだ動画がありません</h1>
+              <p className="mt-2 text-sm leading-6 text-white/70">
+                動物園から動画が投稿されると、ここに表示されます。
+              </p>
+              <button className="mt-5 rounded-xl bg-white px-5 py-3 text-sm font-bold text-slate-950" onClick={() => void feedQuery.refetch()} type="button">
+                再読み込み
+              </button>
+            </div>
+          </div>
+        )}
+
+        {feedQuery.data && feedQuery.data.length > 0 && (
           <div className="h-full snap-y snap-mandatory overflow-y-auto overscroll-contain" ref={scrollerRef}>
             {feedQuery.data.map((item, index) => (
               <div className="h-full snap-start" data-index={index} key={item.id}>
