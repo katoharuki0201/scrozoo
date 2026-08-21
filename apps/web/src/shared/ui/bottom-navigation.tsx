@@ -12,6 +12,7 @@ const viewerItems = [
 const creatorItems = [
   { to: '/mypage', label: 'マイページ', icon: UserIcon },
   { to: '/mypage/posts/new', label: '投稿作成', icon: UploadIcon },
+  { to: '/mypage/visit-qr', label: '来園QR', icon: QrCodeIcon },
   { to: '/mypage/supporters', label: 'サポーター', icon: UsersIcon },
 ]
 

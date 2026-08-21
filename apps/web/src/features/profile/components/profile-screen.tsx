@@ -9,7 +9,6 @@ import {
   ChevronRightIcon,
   ClipboardListIcon,
   LogOutIcon,
-  QrCodeIcon,
   TargetIcon,
   XIcon,
 } from '../../../shared/ui/icons'
@@ -122,24 +121,14 @@ export function ProfileScreen({
                 </Link>
               )}
               {isCreator && (
-                <>
-                  <Link
-                    className="flex h-17 items-center rounded-2xl bg-slate-200 px-5 text-slate-800 active:bg-slate-300"
-                    to="/mypage/support-goal"
-                  >
-                    <TargetIcon className="size-8" />
-                    <span className="ml-3 flex-1 text-base font-bold">応援目標の管理</span>
-                    <ChevronRightIcon className="size-7" />
-                  </Link>
-                  <Link
-                    className="flex h-17 items-center rounded-2xl bg-slate-200 px-5 text-slate-800 active:bg-slate-300"
-                    to="/mypage/visit-qr"
-                  >
-                    <QrCodeIcon className="size-8" />
-                    <span className="ml-3 flex-1 text-base font-bold">来園QRコード</span>
-                    <ChevronRightIcon className="size-7" />
-                  </Link>
-                </>
+                <Link
+                  className="flex h-17 items-center rounded-2xl bg-slate-200 px-5 text-slate-800 active:bg-slate-300"
+                  to="/mypage/support-goal"
+                >
+                  <TargetIcon className="size-8" />
+                  <span className="ml-3 flex-1 text-base font-bold">応援目標の管理</span>
+                  <ChevronRightIcon className="size-7" />
+                </Link>
               )}
               <button
                 className="flex h-17 w-full items-center rounded-2xl border border-red-100 bg-red-50 px-5 text-left text-red-600 active:bg-red-100"

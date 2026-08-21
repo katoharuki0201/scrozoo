@@ -109,7 +109,7 @@ export function CreatorVisitQrPage() {
           </>
         )}
       </div>
-      <BottomNavigation activePath="/mypage" />
+      <BottomNavigation activePath="/mypage/visit-qr" />
     </main>
   )
 }
