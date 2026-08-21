@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState, type ChangeEvent } from 'react'
-import { useForm, useWatch } from 'react-hook-form'
+import { useController, useForm, useWatch } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router'
 import { useAuth } from '../features/auth/hooks/use-auth'
 import { createCreatorPost } from '../features/creator-post/api/creator-post-api'
@@ -32,7 +32,14 @@ export function CreatorPostCreationPage() {
     resolver: zodResolver(creatorPostFormSchema),
     defaultValues: { caption: '', tagsText: '' },
   })
-  const videoField = form.register('video')
+  const {
+    field: {
+      name: videoFieldName,
+      onBlur: handleVideoBlur,
+      onChange: setVideoValue,
+      ref: setVideoInputRef,
+    },
+  } = useController({ control: form.control, name: 'video' })
   const caption = useWatch({ control: form.control, name: 'caption' }) ?? ''
   const tagsText = useWatch({ control: form.control, name: 'tagsText' }) ?? ''
   const parsedTags = parseTags(tagsText)
@@ -45,7 +52,8 @@ export function CreatorPostCreationPage() {
     const file = event.target.files?.[0]
     if (!file) return
 
-    form.setValue('video', file, { shouldDirty: true, shouldValidate: true })
+    setVideoValue(file)
+    void form.trigger('video')
     setPreviewUrl(URL.createObjectURL(file))
   }
 
@@ -132,7 +140,7 @@ export function CreatorPostCreationPage() {
                 <span className="mt-2 text-xs leading-5 text-slate-500">MP4・WebM・MOV / 最大200MB</span>
               </label>
             )}
-            <input {...videoField} accept="video/mp4,video/webm,video/quicktime" className="sr-only" id="creator-post-video" onChange={selectVideo} type="file" />
+            <input accept="video/mp4,video/webm,video/quicktime" className="sr-only" id="creator-post-video" name={videoFieldName} onBlur={handleVideoBlur} onChange={selectVideo} ref={setVideoInputRef} type="file" />
             {form.formState.errors.video && <p className="mt-2 text-sm font-bold text-red-600" role="alert">{form.formState.errors.video.message}</p>}
           </section>
 
