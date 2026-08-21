@@ -56,6 +56,15 @@ export function VideoFeedCard({
     video.currentTime = 0
   }
 
+  function handleEnded() {
+    const video = videoRef.current
+
+    if (!video || !isFreeUser || item.hasActiveSupportPlan) return
+
+    video.currentTime = 0
+    if (active) void video.play().catch(() => setIsPaused(true))
+  }
+
   function togglePlayback() {
     const video = videoRef.current
 
@@ -77,6 +86,7 @@ export function VideoFeedCard({
         loop={!isFreeUser || item.hasActiveSupportPlan}
         muted={isMuted}
         onClick={togglePlayback}
+        onEnded={handleEnded}
         onPause={() => setIsPaused(true)}
         onPlay={() => setIsPaused(false)}
         onTimeUpdate={handleTimeUpdate}
