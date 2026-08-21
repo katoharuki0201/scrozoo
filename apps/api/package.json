@@ -7,6 +7,7 @@
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "admin:create": "bun run src/scripts/create-admin.ts",
     "auth:generate": "bun x auth@latest generate --output ./src/db/auth-schema.ts --yes"
   },
   "dependencies": {

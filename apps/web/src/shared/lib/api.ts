@@ -8,18 +8,6 @@ export const apiClient = ky.create({
   credentials: 'include',
   retry: 0,
   timeout: 15_000,
-  hooks: {
-    beforeRequest: [
-      ({ request }) => {
-        const isAdminRequest = new URL(request.url).pathname.includes('/api/admin/')
-        const token = isAdminRequest ? localStorage.getItem('admin-token') : null
-
-        if (token) {
-          request.headers.set('Authorization', `Bearer ${token}`)
-        }
-      },
-    ],
-  },
 })
 
 type Method = 'get' | 'post' | 'put' | 'patch' | 'delete'

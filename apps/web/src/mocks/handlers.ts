@@ -4,7 +4,7 @@ import { z } from 'zod'
 const MOCK_EMAIL_TOKEN = 'mock-email-session-token'
 const MOCK_GOOGLE_TOKEN = 'mock-google-session-token'
 const MOCK_CREATOR_TOKEN = 'mock-creator-session-token'
-const MOCK_ADMIN_TOKEN = 'mock-admin-session-token'
+let mockAdminSignedIn = false
 
 let likedVideoIds = new Set<string>([
   'kangaroo-snow',
@@ -292,7 +292,8 @@ function getToken(request: Request) {
 }
 
 function requireAdmin(request: Request) {
-  return getToken(request) === MOCK_ADMIN_TOKEN
+  void request
+  return mockAdminSignedIn
 }
 
 function publicAdminCreator(creator: MockAdminCreator) {
@@ -540,7 +541,8 @@ export const handlers = [
     if (!result.success || result.data.email.toLowerCase() !== 'admin@scrozoo.jp' || result.data.password !== 'admin1234') {
       return HttpResponse.json({ message: 'Unauthorized' }, { status: 401 })
     }
-    return HttpResponse.json({ token: MOCK_ADMIN_TOKEN, admin: { id: 'admin-1', name: 'SCROZOO管理者', email: 'admin@scrozoo.jp' } })
+    mockAdminSignedIn = true
+    return HttpResponse.json({ admin: { id: 'admin-1', name: 'SCROZOO管理者', email: 'admin@scrozoo.jp' } })
   }),
   http.get('*/api/admin/auth/session', async ({ request }) => {
     await delay(200)
@@ -549,6 +551,7 @@ export const handlers = [
   }),
   http.post('*/api/admin/auth/logout', async () => {
     await delay(150)
+    mockAdminSignedIn = false
     return new HttpResponse(null, { status: 204 })
   }),
   http.get('*/api/admin/dashboard', async ({ request }) => {

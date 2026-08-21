@@ -7,7 +7,6 @@ export const adminUserSchema = z.object({
 })
 
 export const adminSessionSchema = z.object({
-  token: z.string(),
   admin: adminUserSchema,
 })
 

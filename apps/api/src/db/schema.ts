@@ -273,6 +273,42 @@ export const zoo = sqliteTable(
   ],
 );
 
+export const creatorAccount = sqliteTable(
+  "creator_account",
+  {
+    userId: text("user_id")
+      .primaryKey()
+      .references(() => user.id, { onDelete: "cascade" }),
+    managerName: text("manager_name").notNull(),
+    status: text("status")
+      .$type<"active" | "suspended">()
+      .default("active")
+      .notNull(),
+    issuedByAdminUserId: text("issued_by_admin_user_id").references(
+      () => user.id,
+      { onDelete: "set null" },
+    ),
+    issuedAt: integer("issued_at", { mode: "timestamp_ms" })
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      .notNull(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    index("creator_account_status_issued_at_idx").on(
+      table.status,
+      table.issuedAt,
+    ),
+    check(
+      "creator_account_manager_name_length_check",
+      sql`length(${table.managerName}) between 1 and 30`,
+    ),
+    check(
+      "creator_account_status_check",
+      sql`${table.status} in ('active', 'suspended')`,
+    ),
+  ],
+);
+
 export const zooSocialLink = sqliteTable(
   "zoo_social_link",
   {
@@ -855,6 +891,22 @@ export const zooRelations = relations(zoo, ({ one, many }) => ({
   galleryPosts: many(galleryPost),
   chatMessages: many(chatMessage),
 }));
+
+export const creatorAccountRelations = relations(
+  creatorAccount,
+  ({ one }) => ({
+    user: one(user, {
+      fields: [creatorAccount.userId],
+      references: [user.id],
+      relationName: "creatorAccountUser",
+    }),
+    issuer: one(user, {
+      fields: [creatorAccount.issuedByAdminUserId],
+      references: [user.id],
+      relationName: "creatorAccountIssuer",
+    }),
+  }),
+);
 
 export const zooSocialLinkRelations = relations(zooSocialLink, ({ one }) => ({
   zoo: one(zoo, {

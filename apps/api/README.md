@@ -17,6 +17,14 @@ cp .env.example .env
 bun run db:migrate
 ```
 
+### 初期管理者の作成
+
+マイグレーション適用後、環境変数で認証情報を渡して最初の管理者を作成します。パスワードはBetter Authでハッシュ化され、ログには出力されません。
+
+```sh
+ADMIN_NAME="SCROZOO管理者" ADMIN_EMAIL="admin@example.com" ADMIN_PASSWORD="replace-me" bun run admin:create
+```
+
 ## 認証スキーマ生成
 
 `src/auth.ts` の設定から `src/db/auth-schema.ts` を生成します。
@@ -52,11 +60,12 @@ Web側のVite開発サーバーは `/api` をこのAPIにプロキシします�
 
 ## 認証ミドルウェア
 
-`src/middleware/auth.ts` は次の3種類を提供します。
+`src/middleware/auth.ts` は次の4種類を提供します。
 
 - `sessionMiddleware`: セッションを `c.get("session")` で取得可能にする
 - `requireAuth`: 未ログインを `401` で拒否する
 - `requirePublisher`: 投稿者以外を `403` で拒否する
+- `requireAdmin`: 管理者以外を `403` で拒否する
 
 `src/index.ts` で `sessionMiddleware` を適用済みのため、ログイン必須ルートには次のように追加します。
 
