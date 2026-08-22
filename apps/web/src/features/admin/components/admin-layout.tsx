@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router'
 import type { SVGProps } from 'react'
 import { useAdminAuth } from '../hooks/use-admin-auth'
+import { BrandLogo } from '../../../shared/ui/brand-logo'
 
 const navItems = [
   { to: '/admin', label: 'ダッシュボード', icon: 'dashboard', end: true },
@@ -40,9 +41,9 @@ export function AdminLayout() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950">
       <aside className="fixed inset-y-0 left-0 z-20 flex w-64 flex-col border-r border-slate-800 bg-slate-950 text-white">
-        <div className="flex h-20 items-center gap-3 border-b border-slate-800 px-6">
-          <div className="grid size-10 place-items-center rounded-xl bg-sky-500 font-black">S</div>
-          <div><p className="font-bold tracking-tight">SCROZOO</p><p className="text-[11px] font-medium tracking-widest text-slate-400">ADMIN CONSOLE</p></div>
+        <div className="flex h-20 flex-col items-start justify-center gap-1 border-b border-slate-800 px-6">
+          <BrandLogo className="h-7 w-auto rounded bg-white" />
+          <p className="text-[10px] font-medium tracking-widest text-slate-400">ADMIN CONSOLE</p>
         </div>
         <nav aria-label="管理メニュー" className="flex-1 space-y-1 px-3 py-6">
           {navItems.map((item) => (

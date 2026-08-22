@@ -5,6 +5,7 @@ import { useLocation, useNavigate } from 'react-router'
 import { loginAdmin } from '../features/admin/api/admin-api'
 import { useAdminAuth } from '../features/admin/hooks/use-admin-auth'
 import { adminLoginFormSchema, type AdminLoginFormValues } from '../features/admin/model/admin'
+import { BrandLogo } from '../shared/ui/brand-logo'
 
 export function AdminLoginPage() {
   const { authenticate } = useAdminAuth()
@@ -24,7 +25,7 @@ export function AdminLoginPage() {
     <main className="grid min-h-screen grid-cols-[minmax(420px,0.9fr)_minmax(560px,1.1fr)] bg-white">
       <section className="flex items-center justify-center px-12 py-16">
         <div className="w-full max-w-md">
-          <div className="mb-12 flex items-center gap-3"><div className="grid size-11 place-items-center rounded-xl bg-slate-950 text-lg font-black text-white">S</div><div><p className="font-bold tracking-tight">SCROZOO</p><p className="text-[10px] font-bold tracking-[0.18em] text-slate-400">ADMIN CONSOLE</p></div></div>
+          <div className="mb-12"><BrandLogo className="h-10 w-auto" /><p className="mt-2 text-[10px] font-bold tracking-[0.18em] text-slate-400">ADMIN CONSOLE</p></div>
           <h1 className="text-3xl font-bold tracking-tight">管理者ログイン</h1>
           <p className="mt-3 text-sm leading-6 text-slate-500">サービスの運営状況とアカウントを管理します。</p>
           <form className="mt-9 space-y-5" noValidate onSubmit={form.handleSubmit((values) => mutation.mutate(values))}>

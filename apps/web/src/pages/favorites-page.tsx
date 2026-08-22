@@ -6,6 +6,7 @@ import { favoriteVideosQueryOptions } from '../features/favorites/api/favorites-
 import type { FavoriteSort } from '../features/favorites/model/favorite'
 import { ProfileAvatar } from '../features/profile/components/profile-avatar'
 import { BottomNavigation } from '../shared/ui/bottom-navigation'
+import { BrandLogo } from '../shared/ui/brand-logo'
 import { LogOutIcon, XIcon } from '../shared/ui/icons'
 import { VideoGridTile } from '../shared/ui/video-grid-tile'
 
@@ -31,7 +32,7 @@ export function FavoritesPage() {
         <header className="px-4 pb-7 pt-[max(1.5rem,env(safe-area-inset-top))]">
           <div className="flex h-16 items-center justify-between px-2">
             <div>
-              <p className="-rotate-2 text-3xl font-black tracking-[-0.08em] text-slate-800 italic">Scrozoo</p>
+              <BrandLogo className="h-8 w-auto" />
               <h1 className="sr-only">お気に入り</h1>
             </div>
             <button aria-label="アカウントメニューを開く" className="rounded-full" onClick={() => setAccountMenuOpen(true)} type="button">

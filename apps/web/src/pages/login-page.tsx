@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form'
 import { Link, useLocation, useNavigate } from 'react-router'
 import { loginWithEmail, loginWithGoogle } from '../features/auth/api/auth-api'
 import { useAuth } from '../features/auth/hooks/use-auth'
+import { BrandLogo } from '../shared/ui/brand-logo'
 import {
   loginFormSchema,
   type AuthSession,
@@ -74,10 +75,7 @@ export function LoginPage() {
     <main className="mx-auto min-h-svh max-w-[430px] bg-white shadow-2xl">
       <section className="flex min-h-svh items-center justify-center px-6 py-12">
         <div className="w-full max-w-md">
-          <div className="mb-10 flex items-center gap-3">
-            <div className="grid size-10 place-items-center rounded-xl bg-slate-950 font-bold text-white">S</div>
-            <span className="text-xl font-bold tracking-tight">Scrozoo</span>
-          </div>
+          <BrandLogo className="mb-10 h-10 w-auto" />
 
           <div>
             <h2 className="text-3xl font-bold tracking-tight text-slate-950">ログイン</h2>

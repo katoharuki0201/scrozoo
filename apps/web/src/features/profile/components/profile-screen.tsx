@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { useAuth } from '../../auth/hooks/use-auth'
 import { BottomNavigation } from '../../../shared/ui/bottom-navigation'
+import { BrandLogo } from '../../../shared/ui/brand-logo'
 import {
   AccountCircleIcon,
   ChevronLeftIcon,
@@ -67,7 +68,7 @@ export function ProfileScreen({
             </Link>
           ) : (
             <div className="flex h-14 items-center justify-between">
-              <p className="-rotate-2 text-3xl font-black tracking-[-0.08em] text-slate-800 italic">Scrozoo</p>
+              <BrandLogo className="h-8 w-auto" />
               <button aria-label="アカウントメニューを開く" className="rounded-full" onClick={() => setAccountMenuOpen(true)} type="button">
                 <ProfileAvatar avatarUrl={profile.avatarUrl} name={profile.name} size="small" />
               </button>

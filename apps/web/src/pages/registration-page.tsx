@@ -9,6 +9,7 @@ import {
   registerWithGoogle,
 } from '../features/auth/api/auth-api'
 import { useAuth } from '../features/auth/hooks/use-auth'
+import { BrandLogo } from '../shared/ui/brand-logo'
 import {
   registrationFormSchema,
   type AuthSession,
@@ -78,10 +79,7 @@ export function RegistrationPage() {
     <main className="mx-auto min-h-svh max-w-[430px] bg-white shadow-2xl">
       <section className="flex min-h-svh items-center justify-center px-6 py-12">
         <div className="w-full max-w-md">
-          <div className="mb-8 flex items-center gap-3">
-            <div className="grid size-10 place-items-center rounded-xl bg-slate-950 font-bold text-white">S</div>
-            <span className="text-xl font-bold tracking-tight">Scrozoo</span>
-          </div>
+          <BrandLogo className="mb-8 h-10 w-auto" />
           <h2 className="text-3xl font-bold tracking-tight text-slate-950">新規登録</h2>
           <p className="mt-3 text-sm leading-6 text-slate-500">アカウントを作成して、動物たちの毎日を楽しみましょう。</p>
 
