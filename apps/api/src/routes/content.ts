@@ -122,7 +122,7 @@ async function feedRows(currentUserId?: string, options: FeedOptions = {}) {
     return {
       id: row.id,
       videoUrl,
-      zoo: { id: row.zooId, name: row.zooName, avatarUrl: row.avatarObjectKey ? mediaUrl(row.avatarObjectKey) : "/icon.jpg" },
+      zoo: { id: row.zooId, name: row.zooName, avatarUrl: row.avatarObjectKey ? mediaUrl(row.avatarObjectKey) : null },
       caption: row.caption,
       tags: tagsByVideo.get(row.id) ?? [],
       likeCount: likesByVideo.get(row.id) ?? 0,

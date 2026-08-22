@@ -125,11 +125,13 @@ export function VideoFeedCard({
           onClick={() => void navigate(`/zoos/${item.zoo.id}`)}
           type="button"
         >
-          <img
-            alt=""
-            className="size-full object-cover"
-            src={item.zoo.avatarUrl}
-          />
+          {item.zoo.avatarUrl ? (
+            <img alt="" className="size-full object-cover" src={item.zoo.avatarUrl} />
+          ) : (
+            <span aria-hidden="true" className="grid size-full place-items-center bg-gradient-to-br from-orange-300 to-sky-300 text-sm font-black text-white">
+              {item.zoo.name.slice(0, 2)}
+            </span>
+          )}
         </button>
         <FeedAction count={item.likeCount} label="いいね" onClick={onLike}>
           <HeartIcon className={`size-8 ${item.isLiked ? 'text-rose-500' : ''}`} fill={item.isLiked ? 'currentColor' : 'none'} />

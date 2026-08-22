@@ -7,6 +7,13 @@ import { animal, mediaAsset, tag, video, videoTag, zoo } from "../db/schema";
 import { requirePublisher, type AuthEnv } from "../middleware/auth";
 
 const creatorPosts = new Hono<AuthEnv>();
+
+function publicMediaUrl(objectKey: string | null, mediaBase: string) {
+  if (!objectKey) return null;
+  if (/^(?:https?:\/\/|\/)/.test(objectKey)) return objectKey;
+  return `${mediaBase}/${objectKey}`;
+}
+
 creatorPosts.post("/creator/posts", requirePublisher, async (c) => {
   const session = c.get("session")!;
   const body = await c.req.json<unknown>().catch(() => null);
@@ -24,9 +31,12 @@ creatorPosts.post("/creator/posts", requirePublisher, async (c) => {
     caption.length === 0 || caption.length > 120 || tags.length > 5 || tags.some((item) => item.length > 20)
   ) return validationError(c);
 
-  const [ownedZoo] = await db.select({ id: zoo.id, name: zoo.name }).from(zoo).where(and(
-    eq(zoo.publisherUserId, session.user.id), eq(zoo.status, "active"),
-  )).limit(1);
+  const [ownedZoo] = await db
+    .select({ id: zoo.id, name: zoo.name, avatarObjectKey: mediaAsset.objectKey })
+    .from(zoo)
+    .leftJoin(mediaAsset, eq(zoo.profileMediaAssetId, mediaAsset.id))
+    .where(and(eq(zoo.publisherUserId, session.user.id), eq(zoo.status, "active")))
+    .limit(1);
   if (!ownedZoo) return c.json({ error: { code: "FORBIDDEN", message: "有効な動物園がありません" } }, 403);
 
   const [selectedAnimal] = await db.select({ id: animal.id }).from(animal).where(and(
@@ -76,7 +86,11 @@ creatorPosts.post("/creator/posts", requirePublisher, async (c) => {
   return c.json({
     id,
     videoUrl: `${mediaBase}/${preview.objectKey}`,
-    zoo: { id: ownedZoo.id, name: ownedZoo.name, avatarUrl: "/icon.jpg" },
+    zoo: {
+      id: ownedZoo.id,
+      name: ownedZoo.name,
+      avatarUrl: publicMediaUrl(ownedZoo.avatarObjectKey, mediaBase),
+    },
     caption,
     tags,
     likeCount: 0,
