@@ -20,7 +20,7 @@
 ### 実APIモード
 
 - [ ] `VITE_ENABLE_MOCKS=false` にする
-- [ ] APIの環境変数、Turso、公開・非公開R2、R2 CORSを設定する
+- [ ] APIの環境変数、Turso、公開・非公開R2、R2 CORSを設定する（`apps/api` で `bun run r2:cors`）
 - [ ] DBマイグレーションを適用する
 - [ ] `bun run db:seed:dev-accounts` または運用データで管理者・投稿者を用意する
 - [ ] 投稿者の動物園に、投稿対象として選べる有効な動物を1件以上登録する

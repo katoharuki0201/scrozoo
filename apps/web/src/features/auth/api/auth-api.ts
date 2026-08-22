@@ -68,5 +68,5 @@ export async function getSession() {
 }
 
 export async function logoutSession() {
-  await api.post<void>('auth/sign-out')
+  await api.post<void>('auth/sign-out', {})
 }
